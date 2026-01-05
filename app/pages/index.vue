@@ -26,21 +26,21 @@
   }
 
   useHead({
-    title: 'Palette Alchemy – Modern Color Palette Generator',
+    title: 'Chromi – Modern Color Palette Generator',
     htmlAttrs: { lang: 'en' },
     link: [
-      { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+      { rel: 'icon', type: 'image/webp', href: '/brand.webp' }
     ]
   })
 
   useSeoMeta({
-    title: 'Palette Alchemy – Modern Color Palette Generator',
+    title: 'Chromi – Modern Color Palette Generator',
     description: '🎨 Feature-rich color palette tool using Nuxt, TypeScript, Tailwind, and Shadcn/ui, letting designers generate palettes across color theories, analyze properties, export formats, and enjoy a responsive, elegant interface.',
-    ogTitle: 'Palette Alchemy – Modern Color Palette Generator',
+    ogTitle: 'Chromi – Modern Color Palette Generator',
     ogDescription: '🎨 Feature-rich color palette tool using Nuxt, TypeScript, Tailwind, and Shadcn/ui, letting designers generate palettes across color theories, analyze properties, export formats, and enjoy a responsive, elegant interface.',
     ogImage: '/OpenGraph.webp',
-    ogUrl: 'https://palette-alchemy.vercel.app',
-    twitterTitle: 'Palette Alchemy – Modern Color Palette Generator',
+    ogUrl: 'https://chromi.vercel.app/',
+    twitterTitle: 'Chromi – Modern Color Palette Generator',
     twitterDescription: '🎨 Feature-rich color palette tool using Nuxt, TypeScript, Tailwind, and Shadcn/ui, letting designers generate palettes across color theories, analyze properties, export formats, and enjoy a responsive, elegant interface.',
     twitterImage: '/OpenGraph.webp',
     twitterCard: 'summary_large_image',

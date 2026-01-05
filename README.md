@@ -1,79 +1,81 @@
-![PaletteAlchemy](/public/OpenGraph.webp)
+![Chromi](/public/OpenGraph.webp)
 
-# Palette Alchemy
+# Chromi
 
-🎨 Feature-rich color palette tool using Nuxt, TypeScript, Tailwind, and Shadcn/ui, letting designers generate palettes across color theories, analyze properties, export formats, and enjoy a responsive, elegant interface.
+🎨 Feature-rich palette generator and analyzer using Nuxt, TypeScript, Tailwind, shadcn/ui, Pinia, chroma-js, html2canvas, and VueUse for a fast, accessible, and extensible design workflow.
 
-## Features
+## ☁️ Deploy your own
 
-- Generate color palettes in various modes (analogous, monochrome, complementary, triadic, compound, shades, tetradic, square)
-- Random palette generation with customizable color count
-- Color format conversions (HEX, RGB, HSL, HWB, etc.)
-- Color analysis (hue, brightness, luminance, contrast)
-- Responsive UI with sidebar controls and grid display
-- Copy color values to clipboard with toast notifications
-- Export palettes
-- Built with a beautiful, accessible UI using Tailwind CSS and shadcn components
+[![Deploy with Vercel](_deploy_vercel.svg)](https://vercel.com/new/clone?repository-url=https://github.com/KurutoDenzeru/Chromi)  [![Deploy with Netlify](_deploy_netlify.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/KurutoDenzeru/Chromi)
 
-## Tech Stack
+## ✨ Features
 
-- [Nuxt 4](https://nuxt.com/) (Vue 3)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Pinia](https://pinia.vuejs.org/) (state management)
-- [chroma-js](https://gka.github.io/chroma.js/) (color manipulation)
-- [vue-sonner](https://github.com/emilkowalski/vue-sonner) (toasts)
-- [shadcn-vue](https://ui.shadcn.com/) (UI components)
+- **Multi-Mode Palette Generation:** Generate color palettes using analogous, monochrome, complementary, triadic, compound, shades, tetradic, and square color theories.
+- **Random & Customizable Generation:** Create random palettes with custom color counts and instantly refresh to explore new combinations.
+- **Format Conversions:** Convert colors between HEX, RGB, HSL, HWB, and other formats seamlessly with real-time updates.
+- **Color Analysis & Properties:** Analyze hue, brightness, luminance, saturation, contrast, and other color metrics in-depth.
+- **Quick Copy to Clipboard:** Copy individual color values or entire palettes to clipboard with instant toast notifications.
+- **Export Palettes:** Export color palettes in multiple formats for use in design tools and codebases.
+- **Responsive & Accessible UI:** Beautiful, mobile-first interface with sidebar controls, grid display, and accessible design patterns.
 
-## Deploy Your Own
+## 🧱 Tech Stack
 
-You can deploy this project to Vercel, Netlify, or any platform that supports Nuxt 4 static or SSR deployments.
+- [Nuxt 4](https://nuxt.com/) + [Vue 3](https://vuejs.org/) + [TypeScript](https://www.typescriptlang.org/): Modern meta-framework for fast, full-stack development.
+- [Tailwind](https://tailwindcss.com/): Utility-first CSS framework for rapid, responsive styling.
+- [Shadcn Vue](https://www.shadcn-vue.com/) + [Radix Vue](https://radix-vue.com/): Headless UI components and design patterns.
+- [Pinia](https://pinia.vuejs.org/): Lightweight, intuitive state management for Vue 3.
+- [chroma-js](https://gka.github.io/chroma.js/): Powerful color manipulation and analysis library.
+- [VueUse](https://vueuse.org/): Collection of essential Vue composition utilities.
 
-- **Vercel:** [vercel.com/new](https://vercel.com/new)
-- **Netlify:** [netlify.com/new](https://app.netlify.com/start)
+## ⚡ Getting Started
 
-## Getting Started
+Clone the repo, install deps, and boot the dev server:
 
-1. **Clone the repository:**
+```bash
+git clone https://github.com/KurutoDenzeru/Chromi.git
+cd Chromi
+bun install
+bun run dev
+```
 
-   ```bash
-   git clone https://github.com/KurutoDenzeru/chromatic-alchemy.git
-   cd chromatic-alchemy
-   ```
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-2. **Install dependencies:**
+## 📦 Build for Production
 
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
+```bash
+bun run build
+bun start
+```
 
-3. **Start the development server:**
+## 🗂️ Configuration
 
-   ```bash
-   npm run dev
-   # or
-   bun run dev
-   ```
+The editor is componentized under `app/components`. Key areas to customize are:
 
-4. **Open in your browser:**
-   Visit [http://localhost:3000](http://localhost:3000)
+```text
+app/
+  components/
+    ColorPicker.vue           # color input UI
+    PaletteDisplay.vue        # palette grid & swatches
+    PaletteControls.vue       # sidebar controls
+  composables/
+    palette/
+      usePalette.ts           # palette generation logic
+      usePaletteStore.ts      # Pinia store for palette state
+      useColorAnalysis.ts     # color analysis helpers
+  pages/                      # file-based routes (e.g., `index.vue`)
+  types/                      # TypeScript types (e.g., `palette.ts`)
+```
 
-## Configuration
+## 🤝🏻 Contributing
 
-- **Tailwind CSS:** Edit `app/assets/css/tailwind.css` and `tailwind.config.js` for custom styles.
-- **Nuxt Config:** See `nuxt.config.ts` for module and build configuration.
-- **Palette Modes:** Add or modify palette modes in `app/composables/palette/usePalette.ts`.
-- **State Management:** Uses Pinia stores in `app/composables/palette/usePaletteStore.ts`.
+Contributions are always welcome, whether you’re fixing bugs, improving docs, or shipping new features that make the project better for everyone.
 
-## Contributing
-
-Contributions are always welcome!
-
-See `Contributing.md` for ways to get started.
+Check out [Contributing.md](Contributing) to learn how to get started and follow the recommended workflow.
 
 <!-- Please adhere to this project's `Code of Conduct`. -->
 
-## 📄 License
+## ⚖️ License
 
-[MIT](LICENSE)
+This project is released under the MIT License, giving you the freedom to use, modify, and distribute the code with minimal restrictions.
+
+For the full legal text, see the [MIT](LICENSE) file.

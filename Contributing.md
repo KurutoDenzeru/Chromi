@@ -11,7 +11,7 @@ You can fork this repo by clicking the fork button in the top right corner of th
 2.Clone the repository.
 
 ```bash
-git clone https://github.com/KurutoDenzeru/Barcoda.git
+git clone https://github.com/KurutoDenzeru/Chromi.git
 ```
 
 3.Install dependencies using npm.

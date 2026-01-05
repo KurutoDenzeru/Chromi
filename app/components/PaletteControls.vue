@@ -96,8 +96,8 @@
     class="w-full md:max-w-xs md:min-h-screen bg-card border-b md:border-b-0 md:border-r px-4 md:px-6 py-4 md:py-8 flex flex-col gap-8 md:sticky md:top-0 z-20">
     <div>
       <div class="flex items-center gap-3 mb-4">
-        <NuxtImg src="/pallete.png" alt="Palette Alchemy Logo" class="w-16 h-16" loading="lazy" />
-        <h1 class="font-bold text-xl">Palette Alchemy</h1>
+        <NuxtImg src="/brand.webp" alt="Chromi Logo" class="w-16 h-16" loading="lazy" />
+        <h1 class="font-bold text-xl">Chromi</h1>
       </div>
       <h2 class="text-lg font-semibold mb-1">Palette Controls</h2>
       <p class="text-muted-foreground text-sm mb-4">Pick a color, palette mode, and grid size. Generate or randomize
