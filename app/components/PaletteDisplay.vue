@@ -235,7 +235,7 @@
           <a href="https://linkedin.com/in/kurtcalacday" target="_blank" rel="noopener" aria-label="LinkedIn">
             <Linkedin class="w-5 h-5 hover:text-primary transition" />
           </a>
-          <a href="https://github.com/KurutoDenzeru" target="_blank" rel="noopener" aria-label="GitHub">
+          <a href="https://github.com/KurutoDenzeru/Chromi" target="_blank" rel="noopener" aria-label="GitHub">
             <Github class="w-5 h-5 hover:text-primary transition" />
           </a>
         </div>

@@ -65,6 +65,9 @@ const handleGeneratePalette = () => {
 }
 
 const handleGenerateRandom = () => {
+  // Randomize the palette mode as well
+  const randomMode = MODES[Math.floor(Math.random() * MODES.length)] as PaletteMode
+  paletteMode.value = randomMode
   generateRandom(gridColumns.value[0])
 }
 
