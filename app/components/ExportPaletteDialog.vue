@@ -95,14 +95,23 @@ const exportPalette = async () => {
 
 <template>
   <Dialog>
-    <DialogTrigger as-child>
-      <Button
-        class="w-full flex items-center justify-center gap-2 rounded-md shadow-xs bg-card hover:bg-accent transition-colors"
-        aria-label="Open Export Dialog" variant="outline">
-        <Download class="w-5 h-5 text-primary" />
-        <span>Export Palette</span>
-      </Button>
-    </DialogTrigger>
+    <!-- Optional trigger slot: if provided, use it; otherwise fall back to full-width button -->
+    <template v-if="$slots.trigger">
+      <DialogTrigger as-child>
+        <slot name="trigger" />
+      </DialogTrigger>
+    </template>
+    <template v-else>
+      <DialogTrigger as-child>
+        <Button
+          class="w-full flex items-center justify-center gap-2 rounded-md shadow-xs bg-card hover:bg-accent transition-colors"
+          aria-label="Open Export Dialog" variant="outline">
+          <Download class="w-5 h-5 text-primary" />
+          <span>Export Palette</span>
+        </Button>
+      </DialogTrigger>
+    </template>
+
     <DialogContent class="max-w-[95vw] w-full sm:max-w-md text-left">
       <DialogHeader class="text-left">
         <DialogTitle>Export Palette</DialogTitle>

@@ -22,12 +22,22 @@ export default defineNuxtConfig({
     },
   },
 
+  components: {
+    global: true,
+    dirs: [
+      '~/layouts',
+      '~/components',
+      '~/components/ui',
+      '~/composables',
+    ],
+  },
+
   // Nuxt Vitalizer
   vitalizer: {
     // Remove the render-blocking entry CSS
     // disableStylesheets: 'entry',
     // Remove preloading build resources
-    disablePrefetchLinks: true
+    // disablePrefetchLinks: true
   },
 
   // Shadnc Nuxt
