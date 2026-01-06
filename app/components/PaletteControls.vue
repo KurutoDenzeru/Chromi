@@ -80,6 +80,7 @@ const handleGenerateRandom = () => {
   toast.success('Palette randomized!', {
     description: `Switched to ${randomMode} mode`,
     duration: 2000,
+    class: 'dark:bg-slate-900 dark:border-slate-700 dark:text-white',
   })
 }
 
@@ -229,20 +230,9 @@ if (!imagePalette.value.length) {
     <component :is="Modal.Content" id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
       aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
       <div class="px-4 py-2 md:py-4 lg:px-0 lg:py-4">
-        <component :is="Modal.Header" class="mb-4 text-left flex items-start justify-between gap-3">
-          <div class="flex-1">
-            <component :is="Modal.Title">Palette Controls</component>
-            <component :is="Modal.Description">Pick a color, palette mode, and grid size. Generate or randomize your palette.</component>
-          </div>
-          <template v-if="!isDesktop">
-            <component :is="Modal.Close" as-child>
-              <button aria-label="Close Palette Controls" class="p-2 rounded-md hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10 3.636 5.05 5.05 3.636 10 8.586z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </component>
-          </template>
+        <component :is="Modal.Header" class="mb-4 text-left">
+          <component :is="Modal.Title">Palette Controls</component>
+          <component :is="Modal.Description">Pick a color, palette mode, and grid size. Generate or randomize your palette.</component>
         </component>
 
         <div class="flex flex-col gap-4">
