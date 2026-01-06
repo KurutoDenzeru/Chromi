@@ -76,11 +76,12 @@ const handleGenerateRandom = () => {
   paletteMode.value = randomMode
   generateRandom(gridSize.value)
   
-  // Show toast notification
+  // Show toast notification with responsive position
   toast.success('Palette randomized!', {
     description: `Switched to ${randomMode} mode`,
     duration: 2000,
     class: 'dark:bg-slate-900 dark:border-slate-700 dark:text-white',
+    position: isDesktop.value ? 'bottom-right' : 'top-center',
   })
 }
 
