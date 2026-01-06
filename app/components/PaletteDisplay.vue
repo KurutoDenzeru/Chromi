@@ -74,7 +74,7 @@
     <!-- Background Pattern and Gradients -->
     <div>
       <div class="absolute inset-0 overflow-hidden bg-white dark:bg-gray-950">
-        <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950" />
+        <div class="absolute inset-0 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950" />
         <div class="absolute inset-0 opacity-20 dark:opacity-10">
           <svg width="100%" height="100%">
             <pattern
@@ -240,7 +240,7 @@
           </a>
         </div>
         <div class="text-center">
-          © {{ new Date().getFullYear() }} Palette Alchemacy. KurutoDenzeru. All rights reserved.
+          © {{ new Date().getFullYear() }} Chromi. KurutoDenzeru. All rights reserved.
         </div>
       </footer>
 

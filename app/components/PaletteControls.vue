@@ -284,10 +284,12 @@ if (!imagePalette.value.length) {
 
             <ExportPaletteDialog :palette="palette" :isLoading="isLoading">
               <template #trigger>
-                <Button variant="outline" class="w-full md:w-auto">
-                  <Download class="w-5 h-5" />
-                  <span class="ml-2">Export Palette</span>
-                </Button>
+                <DialogTrigger as-child>
+                  <Button variant="outline" class="w-full md:w-auto">
+                    <Download class="w-5 h-5" />
+                    <span class="ml-2">Export Palette</span>
+                  </Button>
+                </DialogTrigger>
               </template>
             </ExportPaletteDialog>
           </div> 
