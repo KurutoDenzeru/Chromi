@@ -86,9 +86,7 @@ const exportPalette = async () => {
   <Dialog>
     <!-- Optional trigger slot: if provided, use it; otherwise fall back to full-width button -->
     <template v-if="$slots.trigger">
-      <DialogTrigger as-child>
-        <slot name="trigger" />
-      </DialogTrigger>
+      <slot name="trigger" />
     </template>
     <template v-else>
       <DialogTrigger as-child>

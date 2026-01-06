@@ -3,10 +3,11 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { usePalette } from '@/composables/palette/usePalette'
 import Input from '@/components/ui/input/Input.vue'
 import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
 import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
 import { useMediaQuery, useWindowSize, useStorage } from '@vueuse/core'
-import { Dialog, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
+import { Dialog, DialogTrigger, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
 
 const MODES = [
   'analogous',
@@ -74,6 +75,12 @@ const handleGenerateRandom = () => {
   const randomMode = MODES[Math.floor(Math.random() * MODES.length)] as PaletteMode
   paletteMode.value = randomMode
   generateRandom(gridSize.value)
+  
+  // Show toast notification
+  toast.success('Palette randomized!', {
+    description: `Switched to ${randomMode} mode`,
+    duration: 2000,
+  })
 }
 
 // Theme persistence with localStorage
@@ -187,10 +194,12 @@ if (!imagePalette.value.length) {
               <template #trigger>
                 <Tooltip>
                   <TooltipTrigger as-child>
-                    <button aria-label="Export Palette"
-                      class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                      <Download class="w-5 h-5 text-foreground" />
-                    </button>
+                    <DialogTrigger as-child>
+                      <button aria-label="Export Palette"
+                        class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
+                        <Download class="w-5 h-5 text-foreground" />
+                      </button>
+                    </DialogTrigger>
                   </TooltipTrigger>
                   <TooltipContent side="top">Export Palette</TooltipContent>
                 </Tooltip>
