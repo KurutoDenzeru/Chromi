@@ -136,7 +136,7 @@ if (!imagePalette.value.length) {
       <div :class="['fixed inset-x-0 flex justify-center pointer-events-none z-50', isDesktop ? 'top-6 md:top-8 items-start' : 'bottom-6 md:bottom-8 items-end']">
         <div class="flex items-center gap-3 pointer-events-auto">
           <div
-            class="flex items-center gap-2 bg-white/30 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/40 rounded-xl px-2 py-1.5 shadow-lg">
+            class="flex items-center gap-2 bg-white/30 sm:bg-transparent dark:bg-slate-800/40 sm:dark:bg-transparent backdrop-blur-md border border-white/10 dark:border-slate-700/40 ring-1 ring-white/10 dark:ring-slate-800/30 rounded-xl px-2 py-1.5 shadow-xl">
             <!-- Brand icon (link to home) -->
             <NuxtLink to="/" class="flex items-center gap-2">
               <div class="w-10 h-10 rounded-lg overflow-hidden transition hover:bg-white/10 dark:hover:bg-slate-800/40">
@@ -209,13 +209,19 @@ if (!imagePalette.value.length) {
     <component :is="Modal.Content" id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
       aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
       <div class="px-6 py-6 md:py-8 lg:px-8 lg:py-10">
-        <div class="flex items-center gap-3 mb-4">
-          <h1 id="palette-controls-title" class="font-bold text-lg md:text-xl">Palette Controls</h1>
-        </div>
-
-        <p class="text-muted-foreground text-sm mb-4">Pick a color, palette mode, and grid size. Generate or randomize
-          your
-          palette.</p>
+        <component :is="Modal.Header" class="mb-4 text-left">
+          <component :is="Modal.Title">Palette Controls</component>
+          <component :is="Modal.Description">Pick a color, palette mode, and grid size. Generate or randomize your palette.</component>
+          <template v-if="!isDesktop" class="ml-auto">
+            <component :is="Modal.Close" as-child>
+              <button aria-label="Close Palette Controls" class="p-2 rounded-md hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10 3.636 5.05 5.05 3.636 10 8.586z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </component>
+          </template>
+        </component>
 
         <div class="flex flex-col gap-4">
           <TooltipProvider>
@@ -258,26 +264,24 @@ if (!imagePalette.value.length) {
             </div>
           </div>
 
-          <div class="flex gap-2 mt-2 flex-wrap">
-            <Button @click="handleGeneratePalette" :disabled="isLoading" class="w-full md:w-auto">
-              <Palette class="w-5 h-5" />
-              <span class="ml-2">Generate Palette</span>
-            </Button>
-            <Button @click="handleGenerateRandom" variant="outline" class="w-full md:w-auto">
+          <div class="flex gap-2 mt-2 flex-wrap items-center">
+            <Button @click="handleGenerateRandom" :disabled="isLoading" class="w-full md:w-auto">
               <Shuffle class="w-5 h-5" />
               <span class="ml-2">Generate Random</span>
             </Button>
-          </div>
+
+            <ExportPaletteDialog :palette="palette" :isLoading="isLoading">
+              <template #trigger>
+                <Button variant="outline" class="w-full md:w-auto">
+                  <Download class="w-5 h-5" />
+                  <span class="ml-2">Export Palette</span>
+                </Button>
+              </template>
+            </ExportPaletteDialog>
+          </div> 
         </div>
 
-        <div class="mt-4 flex flex-row items-center justify-between gap-3">
-          <div class="flex-1">
-            <ExportPaletteDialog :palette="palette" :isLoading="isLoading" />
-          </div>
-          <div class="shrink-0">
-            <ThemeSwitcher />
-          </div>
-        </div>
+
       </div>
     </component>
   </component>
