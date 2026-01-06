@@ -3,11 +3,9 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { usePalette } from '@/composables/palette/usePalette'
 import Input from '@/components/ui/input/Input.vue'
 import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
-import ColorPicker from '~/components/ColorPicker.vue'
 import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
-import { useMediaQuery } from '@vueuse/core'
+import { useMediaQuery, useWindowSize, useStorage } from '@vueuse/core'
 import { Dialog, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
 
 const MODES = [
@@ -25,9 +23,19 @@ type PaletteMode = typeof MODES[number]
 
 const colorInput = ref('#dc143c')
 const paletteMode = ref<PaletteMode>('shades')
-const gridColumns = ref([16])
+
+// Dynamic grid columns based on window size
+const { width: windowWidth } = useWindowSize()
+const defaultGridColumns = computed(() => {
+  if (!process.client) return 16
+  const availableWidth = Math.max(windowWidth.value - 60, 300)
+  const colCount = Math.max(4, Math.floor(availableWidth / 80))
+  return Math.min(colCount, 32)
+})
+
+// Slider binding (allows manual override)
+const gridSize = ref(14)
 const imagePalette = ref<string[]>([])
-const lastImageFile = ref<File | null>(null)
 
 const {
   palette,
@@ -57,27 +65,28 @@ const Modal = computed(() => ({
 }))
 
 const handleInputEnter = () => {
-  generatePalette(gridColumns.value[0])
+  generatePalette(gridSize.value)
 }
 
-const handleGeneratePalette = () => {
-  generatePalette(gridColumns.value[0])
-}
 
 const handleGenerateRandom = () => {
   // Randomize the palette mode as well
   const randomMode = MODES[Math.floor(Math.random() * MODES.length)] as PaletteMode
   paletteMode.value = randomMode
-  generateRandom(gridColumns.value[0])
+  generateRandom(gridSize.value)
 }
 
-// Theme toggle helper (quick toggle for dock button)
-const themeMode = ref<'system'|'light'|'dark'>('system')
+// Theme persistence with localStorage
+const themeMode = useStorage<'system'|'light'|'dark'>(
+  'palette-alchemy-theme',
+  'system',
+  typeof window !== 'undefined' ? window.localStorage : undefined
+)
+
 onMounted(() => {
   if (typeof window === 'undefined') return
-  if (document.documentElement.classList.contains('dark')) themeMode.value = 'dark'
-  else if (document.documentElement.classList.contains('light')) themeMode.value = 'light'
-  else themeMode.value = 'system'
+  // Apply the persisted theme on mount
+  applyTheme(themeMode.value)
 })
 
 function applyTheme(value: string) {
@@ -101,18 +110,17 @@ function toggleTheme() {
   applyTheme(next)
 }
 
-watch(() => gridColumns.value[0], async (newCount) => {
-  if (lastImageFile.value) {
-    // Re-extract colors from the last image with new count
-  } else if (!imagePalette.value.length) {
-    generatePalette(newCount)
+// Auto-adjust gridSize when default changes (on resize)
+watch(defaultGridColumns, (newDefault) => {
+  if (gridSize.value > newDefault) {
+    gridSize.value = newDefault
   }
 })
 
-// Regenerate palette when paletteMode or gridColumns changes
-watch([paletteMode, () => gridColumns.value[0]], () => {
+// Regenerate palette when paletteMode or gridSize changes
+watch([paletteMode, gridSize], () => {
   if (!imagePalette.value.length) {
-    generatePalette(gridColumns.value[0])
+    generatePalette(gridSize.value)
   }
 })
 
@@ -127,7 +135,7 @@ watch(colorInput, (newValue) => {
 
 // On initial load, generate palette with correct count
 if (!imagePalette.value.length) {
-  generatePalette(gridColumns.value[0])
+  generatePalette(gridSize.value)
 }
 </script>
 
@@ -258,10 +266,9 @@ if (!imagePalette.value.length) {
             </SelectContent>
           </Select>
 
-          <div class="flex flex-col items-start w-full">
-            <label class="text-sm font-medium mb-1">Grid Size: <span class="font-mono">{{ gridColumns[0]
-                }}</span></label>
-            <Slider v-model="gridColumns" :min="4" :max="32" :step="4" class="w-full" />
+          <div class="flex flex-col items-start w-full transition-all duration-300 ease-out">
+            <label class="text-sm font-medium mb-1">Grid Size: <span class="font-mono transition-all duration-300">{{ gridSize }}</span></label>
+            <Slider :model-value="[gridSize]" @update:model-value="(v) => { if (v && v[0]) gridSize = v[0] }" :min="4" :max="32" :step="4" class="w-full transition-all duration-300" />
             <div class="flex justify-between w-full mt-1 text-sm text-muted-foreground font-mono select-none">
               <span v-for="n in [4, 8, 12, 16, 20, 24, 28, 32]" :key="n">{{ n }}</span>
             </div>
