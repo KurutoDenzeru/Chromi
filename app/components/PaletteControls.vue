@@ -137,10 +137,13 @@ if (!imagePalette.value.length) {
         <div class="flex items-center gap-3 pointer-events-auto">
           <div
             class="flex items-center gap-2 bg-white/30 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/40 rounded-xl px-2 py-1.5 shadow-lg">
-            <!-- Brand icon -->
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden bg-white/10">
-              <NuxtImg src="/brand.webp" alt="Brand" class="w-8 h-8" loading="lazy" />
-            </div>
+            <!-- Brand icon (link to home) -->
+            <NuxtLink to="/" class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded-lg overflow-hidden transition hover:bg-white/10 dark:hover:bg-slate-800/40">
+                <NuxtImg src="/brand.webp" alt="Brand" class="w-10 h-10" loading="lazy" />
+              </div>
+              <span class="ml-0.5 font-bold hidden sm:inline">Chromi</span>
+            </NuxtLink>
 
             <div class="w-px h-6 bg-white/10 dark:bg-slate-700/40 rounded mx-1"></div>
 
@@ -207,20 +210,7 @@ if (!imagePalette.value.length) {
       aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
       <div class="px-6 py-6 md:py-8 lg:px-8 lg:py-10">
         <div class="flex items-center gap-3 mb-4">
-          <NuxtImg src="/brand.webp" alt="Logo" class="w-12 h-12" loading="lazy" />
           <h1 id="palette-controls-title" class="font-bold text-lg md:text-xl">Palette Controls</h1>
-          <div class="ml-auto">
-            <component :is="Modal.Close" as-child>
-              <button aria-label="Close Palette Controls"
-                class="p-2 rounded-md hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10 3.636 5.05 5.05 3.636 10 8.586z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-            </component>
-          </div>
         </div>
 
         <p class="text-muted-foreground text-sm mb-4">Pick a color, palette mode, and grid size. Generate or randomize
