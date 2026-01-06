@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Input from '@/components/ui/input/Input.vue'
-import { FileJson, FileImage, FileText, Download } from 'lucide-vue-next'
+import { FileJson, FileImage, FileText, Download, Package } from 'lucide-vue-next'
 
 const exportFormats = [
   { label: 'PNG', value: 'png', icon: FileImage },
@@ -101,9 +101,12 @@ const exportPalette = async () => {
 
     <DialogContent class="max-w-[95vw] w-full sm:max-w-md text-left">
       <DialogHeader class="text-left">
-        <DialogTitle>Export Palette</DialogTitle>
+        <DialogTitle class="flex items-center gap-2">
+          <Package class="w-5 h-5" />
+          Export Palette
+        </DialogTitle>
       </DialogHeader>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-4 py-2">
         <label class="text-sm font-medium">File Name:</label>
         <Input v-model="paletteName" class="mb-2" placeholder="Palette name" />
         <label class="text-sm font-medium">Export Format:</label>
@@ -119,8 +122,11 @@ const exportPalette = async () => {
             </SelectItem>
           </SelectContent>
         </Select>
-        <DialogFooter>
-          <Button class="mt-4 w-full" @click="exportPalette">Export</Button>
+        <DialogFooter class="pt-2">
+          <Button class="w-full gap-2" @click="exportPalette">
+            <Download class="w-4 h-4" />
+            Export
+          </Button>
         </DialogFooter>
       </div>
     </DialogContent>
