@@ -1,23 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { usePalette } from '@/composables/palette/usePalette'
-import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
-import Select from '@/components/ui/select/Select.vue'
-import SelectTrigger from '@/components/ui/select/SelectTrigger.vue'
-import SelectContent from '@/components/ui/select/SelectContent.vue'
-import SelectItem from '@/components/ui/select/SelectItem.vue'
-import Slider from '@/components/ui/slider/Slider.vue'
-import Tooltip from '@/components/ui/tooltip/Tooltip.vue'
-import TooltipTrigger from '@/components/ui/tooltip/TooltipTrigger.vue'
-import TooltipContent from '@/components/ui/tooltip/TooltipContent.vue'
-import TooltipProvider from '@/components/ui/tooltip/TooltipProvider.vue'
-import { Palette, Shuffle, Info, Download } from 'lucide-vue-next'
+import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
 import ColorPicker from '~/components/ColorPicker.vue'
 import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
-import { Separator } from '@/components/ui/separator'
-import { Drawer, DrawerTrigger, DrawerContent, DrawerClose } from '@/components/ui/drawer'
+import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
+import { useMediaQuery } from '@vueuse/core'
+import { Dialog, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
 
 const MODES = [
   'analogous',
@@ -51,6 +42,20 @@ const emit = defineEmits<{
   paletteGenerated: [data: { palette: any[], secondaryPalette: any[] }]
 }>()
 
+// Responsive modal/drawer mapping: Dialog on desktop, Drawer on mobile
+const isDesktop = useMediaQuery('(min-width: 640px)')
+const open = ref(false)
+const Modal = computed(() => ({
+  Root: isDesktop.value ? Dialog : Drawer,
+  Trigger: isDesktop.value ? DialogTriggerComp : DrawerTrigger,
+  Content: isDesktop.value ? DialogContentComp : DrawerContent,
+  Header: isDesktop.value ? DialogHeader : DrawerHeader,
+  Title: isDesktop.value ? DialogTitle : DrawerTitle,
+  Description: isDesktop.value ? DialogDescription : DrawerDescription,
+  Footer: isDesktop.value ? DialogFooter : DrawerFooter,
+  Close: isDesktop.value ? DialogCloseComp : DrawerClose,
+}))
+
 const handleInputEnter = () => {
   generatePalette(gridColumns.value[0])
 }
@@ -61,6 +66,36 @@ const handleGeneratePalette = () => {
 
 const handleGenerateRandom = () => {
   generateRandom(gridColumns.value[0])
+}
+
+// Theme toggle helper (quick toggle for dock button)
+const themeMode = ref<'system'|'light'|'dark'>('system')
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  if (document.documentElement.classList.contains('dark')) themeMode.value = 'dark'
+  else if (document.documentElement.classList.contains('light')) themeMode.value = 'light'
+  else themeMode.value = 'system'
+})
+
+function applyTheme(value: string) {
+  if (typeof window === 'undefined') return
+  if (value === 'system') {
+    document.documentElement.removeAttribute('data-theme')
+    document.documentElement.classList.remove('dark','light')
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark')
+    }
+  } else {
+    document.documentElement.setAttribute('data-theme', value)
+    document.documentElement.classList.remove('dark','light')
+    document.documentElement.classList.add(value)
+  }
+  themeMode.value = value as any
+}
+
+function toggleTheme() {
+  const next = themeMode.value === 'dark' ? 'light' : 'dark'
+  applyTheme(next)
 }
 
 watch(() => gridColumns.value[0], async (newCount) => {
@@ -95,33 +130,32 @@ if (!imagePalette.value.length) {
 
 <template>
   <!-- Floating Liquid Glass Dock (bottom-centered on larger screens, FAB on small screens) -->
-  <Drawer>
+  <component :is="Modal.Root" v-model:open="open">
     <TooltipProvider>
-      <!-- Dock trigger: bottom center for md+, bottom-right FAB for mobile -->
-      <div class="fixed inset-x-0 bottom-6 flex justify-center items-end pointer-events-none z-50 md:bottom-8">
-        <div class="hidden md:flex items-center gap-3 pointer-events-auto">
+      <!-- Dock trigger: top on desktop, bottom on mobile -->
+      <div :class="['fixed inset-x-0 flex justify-center pointer-events-none z-50', isDesktop ? 'top-6 md:top-8 items-start' : 'bottom-6 md:bottom-8 items-end']">
+        <div class="flex items-center gap-3 pointer-events-auto">
           <div
             class="flex items-center gap-2 bg-white/30 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/40 rounded-xl px-2 py-1.5 shadow-lg">
             <!-- Brand icon -->
             <div class="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden bg-white/10">
               <NuxtImg src="/brand.webp" alt="Brand" class="w-8 h-8" loading="lazy" />
             </div>
-            <Separator orientation="vertical" />
+
+            <div class="w-px h-6 bg-white/10 dark:bg-slate-700/40 rounded mx-1"></div>
 
             <!-- Main trigger (palette) -->
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger as-child>
-                  <DrawerTrigger as-child>
-                    <button aria-label="Open Palette Controls" aria-controls="palette-controls-drawer"
-                      class="w-12 h-12 rounded-lg flex items-center justify-center hover:scale-105 transform transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                      <Palette class="w-6 h-6 text-foreground" />
-                    </button>
-                  </DrawerTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="top">Palette Controls</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <component :is="Modal.Trigger" as-child>
+                  <button aria-label="Open Palette Controls" aria-controls="palette-controls-drawer"
+                    class="w-10 h-10 rounded-lg flex items-center justify-center hover:scale-105 hover:bg-white/20 transform transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
+                    <Palette class="w-6 h-6 text-foreground" />
+                  </button>
+                </component>
+              </TooltipTrigger>
+              <TooltipContent side="top">Palette Controls</TooltipContent>
+            </Tooltip>
 
             <!-- Randomize -->
             <Tooltip>
@@ -154,42 +188,29 @@ if (!imagePalette.value.length) {
 
             <Tooltip>
               <TooltipTrigger as-child>
-                <div class="shrink-0">
-                  <ThemeSwitcher />
-                </div>
+                <button aria-label="Toggle theme" @click="toggleTheme" class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
+                  <component :is="themeMode === 'dark' ? Moon : Sun" class="w-5 h-5 text-foreground" />
+                </button>
               </TooltipTrigger>
-              <TooltipContent side="top">Theme</TooltipContent>
+              <TooltipContent side="top">Toggle Theme</TooltipContent>
             </Tooltip>
           </div>
         </div>
 
-        <!-- Mobile FAB -->
-        <div class="md:hidden pointer-events-auto">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <DrawerTrigger as-child>
-                <button aria-label="Open Palette Controls" aria-controls="palette-controls-drawer"
-                  class="w-14 h-14 rounded-lg bg-white/30 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/40 shadow-lg flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                  <Palette class="w-6 h-6 text-foreground" />
-                </button>
-              </DrawerTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="top">Palette Controls</TooltipContent>
-          </Tooltip>
-        </div>
+
       </div>
 
     </TooltipProvider>
 
-    <!-- Drawer content: same controls as before, now in a bottom drawer -->
-    <DrawerContent id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
+    <!-- Modal/Drawer content: Dialog on desktop, Drawer on mobile -->
+    <component :is="Modal.Content" id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
       aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
       <div class="px-6 py-6 md:py-8 lg:px-8 lg:py-10">
         <div class="flex items-center gap-3 mb-4">
           <NuxtImg src="/brand.webp" alt="Logo" class="w-12 h-12" loading="lazy" />
           <h1 id="palette-controls-title" class="font-bold text-lg md:text-xl">Palette Controls</h1>
           <div class="ml-auto">
-            <DrawerClose as-child>
+            <component :is="Modal.Close" as-child>
               <button aria-label="Close Palette Controls"
                 class="p-2 rounded-md hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -198,7 +219,7 @@ if (!imagePalette.value.length) {
                     clip-rule="evenodd" />
                 </svg>
               </button>
-            </DrawerClose>
+            </component>
           </div>
         </div>
 
@@ -268,6 +289,6 @@ if (!imagePalette.value.length) {
           </div>
         </div>
       </div>
-    </DrawerContent>
-  </Drawer>
+    </component>
+  </component>
 </template>
