@@ -145,7 +145,7 @@ if (!imagePalette.value.length) {
               <span class="ml-0.5 font-bold hidden sm:inline">Chromi</span>
             </NuxtLink>
 
-            <div class="w-px h-6 bg-white/10 dark:bg-slate-700/40 rounded mx-1"></div>
+            <div class="w-px h-6 bg-slate-300/50 dark:bg-slate-700/40 mx-1"></div>
 
             <!-- Main trigger (palette) -->
             <Tooltip>
@@ -187,7 +187,7 @@ if (!imagePalette.value.length) {
             </ExportPaletteDialog>
 
             <!-- separator before theme -->
-            <div class="w-px h-6 bg-white/10 dark:bg-slate-700/40 rounded mx-1"></div>
+            <div class="w-px h-6 bg-slate-300/50 dark:bg-slate-700/40 mx-1"></div>
 
             <Tooltip>
               <TooltipTrigger as-child>

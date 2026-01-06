@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Sun, Moon, Monitor } from 'lucide-vue-next'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 const modes = [
   { label: 'System', value: 'system', icon: Monitor },

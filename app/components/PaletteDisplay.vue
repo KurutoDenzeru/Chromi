@@ -1,12 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
-  import Card from '@/components/ui/card/Card.vue'
-  import CardHeader from '@/components/ui/card/CardHeader.vue'
-  import CardTitle from '@/components/ui/card/CardTitle.vue'
-  import CardContent from '@/components/ui/card/CardContent.vue'
-  import HoverCard from '@/components/ui/hover-card/HoverCard.vue'
-  import HoverCardTrigger from '@/components/ui/hover-card/HoverCardTrigger.vue'
-  import HoverCardContent from '@/components/ui/hover-card/HoverCardContent.vue'
+  import { computed } from 'vue'
   import { useColorConversions } from '@/composables/palette/useColorConversions'
   import { useColorAnalysis } from '@/composables/palette/useColorAnalysis'
   import chroma from 'chroma-js'

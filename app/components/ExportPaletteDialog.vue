@@ -1,17 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
-import Select from '@/components/ui/select/Select.vue'
-import SelectTrigger from '@/components/ui/select/SelectTrigger.vue'
-import SelectContent from '@/components/ui/select/SelectContent.vue'
-import SelectItem from '@/components/ui/select/SelectItem.vue'
-import Dialog from '@/components/ui/dialog/Dialog.vue'
-import DialogTrigger from '@/components/ui/dialog/DialogTrigger.vue'
-import DialogContent from '@/components/ui/dialog/DialogContent.vue'
-import DialogHeader from '@/components/ui/dialog/DialogHeader.vue'
-import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
-import DialogFooter from '@/components/ui/dialog/DialogFooter.vue'
 import { FileJson, FileImage, FileText, Download } from 'lucide-vue-next'
 
 const exportFormats = [
