@@ -211,7 +211,7 @@ if (!imagePalette.value.length) {
     <!-- Modal/Drawer content: Dialog on desktop, Drawer on mobile -->
     <component :is="Modal.Content" id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
       aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
-      <div class="px-6 py-6 md:py-8 lg:px-8 lg:py-10">
+      <div class="px-4 py-2 md:py-6 lg:px-4 lg:py-10">
         <component :is="Modal.Header" class="mb-4 text-left">
           <component :is="Modal.Title">Palette Controls</component>
           <component :is="Modal.Description">Pick a color, palette mode, and grid size. Generate or randomize your palette.</component>
