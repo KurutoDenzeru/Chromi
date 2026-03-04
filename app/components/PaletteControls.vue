@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { usePalette } from '@/composables/palette/usePalette'
 import Input from '@/components/ui/input/Input.vue'
 import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
 import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
-import { useMediaQuery, useWindowSize, useStorage } from '@vueuse/core'
+import { useWindowSize, useStorage } from '@vueuse/core'
 import { Dialog, DialogTrigger, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
 
 const MODES = [
@@ -51,8 +51,8 @@ const emit = defineEmits<{
   paletteGenerated: [data: { palette: any[], secondaryPalette: any[] }]
 }>()
 
-// Responsive modal/drawer mapping: Dialog on desktop, Drawer on mobile
-const isDesktop = useMediaQuery('(min-width: 640px)')
+// Responsive modal/drawer mapping: keep SSR + initial client render deterministic.
+const isDesktop = ref(true)
 const open = ref(false)
 const Modal = computed(() => ({
   Root: isDesktop.value ? Dialog : Drawer,
@@ -64,6 +64,8 @@ const Modal = computed(() => ({
   Footer: isDesktop.value ? DialogFooter : DrawerFooter,
   Close: isDesktop.value ? DialogCloseComp : DrawerClose,
 }))
+const modalContentProps = computed(() => (isDesktop.value ? {} : { direction: 'bottom' as const }))
+let removeMediaListener: (() => void) | undefined
 
 const handleInputEnter = () => {
   generatePalette(gridSize.value)
@@ -96,6 +98,21 @@ onMounted(() => {
   if (typeof window === 'undefined') return
   // Apply the persisted theme on mount
   applyTheme(themeMode.value)
+
+  const mediaQuery = window.matchMedia('(min-width: 640px)')
+  const updateDesktopState = () => {
+    isDesktop.value = mediaQuery.matches
+  }
+
+  updateDesktopState()
+  mediaQuery.addEventListener('change', updateDesktopState)
+  removeMediaListener = () => {
+    mediaQuery.removeEventListener('change', updateDesktopState)
+  }
+})
+
+onBeforeUnmount(() => {
+  removeMediaListener?.()
 })
 
 function applyTheme(value: string) {
@@ -228,8 +245,7 @@ if (!imagePalette.value.length) {
     </TooltipProvider>
 
     <!-- Modal/Drawer content: Dialog on desktop, Drawer on mobile -->
-    <component :is="Modal.Content" id="palette-controls-drawer" direction="bottom" role="dialog" aria-modal="true"
-      aria-labelledby="palette-controls-title" class="max-w-3xl mx-auto">
+    <component :is="Modal.Content" v-bind="modalContentProps" class="max-w-3xl mx-auto">
       <div class="px-4 py-2 md:py-4 lg:px-0 lg:py-4">
         <component :is="Modal.Header" class="mb-4 text-left">
           <component :is="Modal.Title">Palette Controls</component>

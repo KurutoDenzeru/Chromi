@@ -5,7 +5,6 @@
   import chroma from 'chroma-js'
   import { Copy, Instagram, Linkedin, Github } from 'lucide-vue-next'
   import { Toaster, toast } from 'vue-sonner'
-  import 'vue-sonner/style.css'
 
   const props = defineProps<{
     palette: { hex: string; rgba: string }[]
