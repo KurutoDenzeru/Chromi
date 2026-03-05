@@ -1,246 +1,265 @@
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { useColorConversions } from '@/composables/palette/useColorConversions'
-  import { useColorAnalysis } from '@/composables/palette/useColorAnalysis'
-  import chroma from 'chroma-js'
-  import { Copy, Instagram, Linkedin, Github } from 'lucide-vue-next'
-  import { Toaster, toast } from 'vue-sonner'
+import { computed } from 'vue'
+import chroma from 'chroma-js'
+import { Copy, Instagram, Linkedin, Github, Sparkles, Blend, Ruler } from 'lucide-vue-next'
+import { Toaster, toast } from 'vue-sonner'
+import { useColorConversions } from '@/composables/palette/useColorConversions'
+import { useColorAnalysis } from '@/composables/palette/useColorAnalysis'
 
-  const props = defineProps<{
-    palette: { hex: string; rgba: string }[]
-    secondaryPalette: { hex: string; rgba: string }[]
-    gridColumns: number
-    selectedColor: string
-  }>()
+const props = defineProps<{
+  palette: { hex: string; rgba: string }[]
+  secondaryPalette: { hex: string; rgba: string }[]
+  gridColumns: number
+  selectedColor: string
+}>()
 
-  const emit = defineEmits<{
-    colorSelected: [color: string]
-  }>()
+const emit = defineEmits<{
+  colorSelected: [color: string]
+}>()
 
-  // Use selectedColor for analysis/conversions
-  const selectedColorRef = computed(() => props.selectedColor)
-  const colorConversions = useColorConversions(selectedColorRef)
-  const colorAnalysis = useColorAnalysis(selectedColorRef)
+const selectedColorRef = computed(() => props.selectedColor)
+const colorConversions = useColorConversions(selectedColorRef)
+const colorAnalysis = useColorAnalysis(selectedColorRef)
 
-  const handleCopy = (hex: string) => {
-    navigator.clipboard.writeText(hex)
-    toast.success(`Copied ${hex} to clipboard!`, {
-      class: 'rounded-xl shadow-lg border-2 border-gray-500 bg-gray-600 text-white text-base font-semibold',
-      style: {
-        background: '#fff',
-        color: '#000',
-        border: '2px solid #6B7280',
-        fontWeight: 600,
-        fontSize: '1rem',
-      },
-      description: 'Color value has been copied.',
-      duration: 2000,
-      position: 'bottom-right',
-    })
+const selectedSwatchStyle = computed(() => ({
+  background: props.selectedColor,
+}))
+
+const paletteTitle = computed(() => (props.palette.length ? `${props.palette.length} generated shades` : 'Waiting for palette'))
+
+const swatchGridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${props.gridColumns}, minmax(0, 1fr))`,
+}))
+
+const handleCopy = (hex: string) => {
+  navigator.clipboard.writeText(hex)
+  toast.success(`Copied ${hex}`, {
+    description: 'Color value copied to clipboard.',
+    duration: 1600,
+    position: 'bottom-right',
+  })
+}
+
+const handleSelectColor = (hex: string) => {
+  emit('colorSelected', hex)
+}
+
+const getColorConversions = (hex: string) => {
+  if (!chroma.valid(hex)) {
+    return { hex: '', rgb: '', hsl: '', hwb: '', cmyk: '', lch: '', keyword: '' }
   }
 
-  const handleSelectColor = (hex: string) => {
-    emit('colorSelected', hex)
-  }
+  const color = chroma(hex)
+  const [hue] = color.hsl()
+  const rgb = color.rgb()
+  const whiteness = Math.min(...rgb) / 255
+  const blackness = 1 - Math.max(...rgb) / 255
 
-  // Helper to get conversions for any color
-  const getColorConversions = (hex: string) => {
-    if (!chroma.valid(hex)) return { hex: '', rgb: '', hsl: '', hwb: '', cmyk: '', lch: '', keyword: '' }
-    const c = chroma(hex)
-    const toHwb = (c: chroma.Color) => {
-      const [h] = c.hsl()
-      const w = Math.min(...c.rgb()) / 255
-      const b = 1 - Math.max(...c.rgb()) / 255
-      return `hwb(${Math.round(h)}, ${(w * 100).toFixed(0)}%, ${(b * 100).toFixed(0)}%)`
-    }
-    const getKeyword = (hex: string) => {
-      try { return chroma(hex).name() } catch { return '' }
-    }
-    return {
-      hex: c.hex(),
-      rgb: c.css('rgb'),
-      hsl: c.css('hsl'),
-      hwb: toHwb(c),
-      cmyk: c.cmyk().map(x => Math.round(x)).join(','),
-      lch: c.lch().map(x => Math.round(x)).join(','),
-      keyword: getKeyword(c.hex())
-    }
+  return {
+    hex: color.hex(),
+    rgb: color.css('rgb'),
+    hsl: color.css('hsl'),
+    hwb: `hwb(${Math.round(hue)}, ${(whiteness * 100).toFixed(0)}%, ${(blackness * 100).toFixed(0)}%)`,
+    cmyk: color.cmyk().map((value) => Math.round(value)).join(','),
+    lch: color.lch().map((value) => Math.round(value)).join(','),
+    keyword: color.name() || 'none',
   }
+}
+
+const keyMetrics = computed(() => [
+  { label: 'Hue', value: `${colorAnalysis.value.hue}°` },
+  { label: 'Brightness', value: `${colorAnalysis.value.brightness}%` },
+  { label: 'Contrast', value: `${colorAnalysis.value.contrast.toFixed(2)}:1` },
+])
+
+const conversionRows = computed(() => [
+  { label: 'HEX', value: colorConversions.value.hex },
+  { label: 'RGB', value: colorConversions.value.rgb },
+  { label: 'HSL', value: colorConversions.value.hsl },
+  { label: 'HWB', value: colorConversions.value.hwb },
+  { label: 'CMYK', value: colorConversions.value.cmyk },
+  { label: 'LCH', value: colorConversions.value.lch },
+  { label: 'Keyword', value: colorConversions.value.keyword || 'none' },
+])
 </script>
 
 <template>
-  <div class="relative w-full h-full">
-    <!-- Background Pattern and Gradients -->
-    <div>
-      <div class="absolute inset-0 overflow-hidden bg-white dark:bg-gray-950">
-        <div class="absolute inset-0 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950" />
-        <div class="absolute inset-0 opacity-20 dark:opacity-10">
-          <svg width="100%" height="100%">
-            <pattern
-              id="analytics-pattern"
-              x="0"
-              y="0"
-              width="100"
-              height="100"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M0 70L20 70L20 30L40 30L40 50L60 50L60 20L80 20L80 60L100 60"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="text-blue-500 dark:text-blue-400"
-              />
-              <path
-                d="M0 80L20 80L20 60L40 60L40 90L60 90L60 70L80 70L80 40L100 40"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="text-emerald-500 dark:text-emerald-400"
-                stroke-dasharray="2,2"
-              />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#analytics-pattern)" />
-          </svg>
-        </div>
-      </div>
-      <div class="absolute inset-0">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_30%)] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.15),transparent_30%)]" />
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(124,58,237,0.1),transparent_30%)] dark:bg-[radial-gradient(circle_at_70%_80%,rgba(124,58,237,0.15),transparent_30%)]" />
-      </div>
-    </div>
-    <main
-      class="relative flex-1 min-h-screen flex flex-col gap-4 justify-center items-center px-4 md:px-8 py-12 md:py-8 overflow-auto max-w-7xl mx-auto w-full">
-      <!-- Generated Palette & Related Colors -->
-      <section class="w-full mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Palette:</CardTitle>
-          </CardHeader>
-          <CardContent class="cursor-pointer">
-            <div :class="`grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-${gridColumns} cursor-pointer`"
-              style="display: flex; flex-wrap: wrap;">
-              <HoverCard v-for="color in palette" :key="color.hex" class="w-full">
-                <HoverCardTrigger>
-                  <div :style="{ background: color.hex, width: '73px', height: '75px' }"
-                    @click="() => { handleSelectColor(color.hex); handleCopy(color.hex); }" />
-                  <div class="w-full text-center text-xs font-mono mt-1" @click="handleCopy(color.hex)">{{
-                    color.hex }}</div>
-                </HoverCardTrigger>
-                <HoverCardContent>
-                  <div
-                    class="flex flex-col text-sm font-mono group-hover:bg-accent/10 rounded-md min-w-[350px] transition-colors">
-                    <div v-for="fmt in [
+  <div class="relative min-h-screen w-full overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 bg-slate-950" />
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,rgba(56,189,248,0.2),transparent_40%),radial-gradient(circle_at_75%_86%,rgba(168,85,247,0.11),transparent_35%)]" />
+    <div class="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(to_right,rgba(56,189,248,0.11)_1px,transparent_1px),linear-gradient(to_bottom,rgba(56,189,248,0.07)_1px,transparent_1px)] [background-size:56px_56px]" />
+
+    <main class="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-28 pt-6 md:gap-7 md:pl-28 md:pr-6 md:pt-8">
+      <Card class="border-white/15 bg-slate-900/55 py-4 backdrop-blur-xl dark:bg-slate-950/60">
+        <CardContent class="grid gap-3 px-3 sm:px-4 md:grid-cols-[220px_1fr] md:items-stretch">
+          <div class="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 p-2.5">
+            <div class="h-16 w-16 shrink-0 aspect-square rounded-xl border border-white/25" :style="selectedSwatchStyle" />
+            <div class="min-w-0">
+              <p class="text-[11px] uppercase tracking-[0.22em] text-slate-300">Current Selection</p>
+              <p class="truncate font-mono text-2xl text-white">{{ selectedColor }}</p>
+            </div>
+          </div>
+
+          <div class="grid gap-2 sm:grid-cols-3">
+            <div v-for="metric in keyMetrics" :key="metric.label" class="rounded-2xl border border-white/15 bg-white/5 px-3 py-2.5">
+              <p class="text-[11px] uppercase tracking-[0.14em] text-slate-300">{{ metric.label }}</p>
+              <p class="mt-1 font-mono text-xl text-slate-100">{{ metric.value }}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card class="border-white/15 bg-slate-900/55 py-5 backdrop-blur-xl dark:bg-slate-950/60">
+        <CardHeader class="px-4 pb-3">
+          <CardTitle class="flex items-center gap-2 text-xl text-white">
+            <Sparkles class="h-5 w-5 text-cyan-200" />
+            Generated Palette
+          </CardTitle>
+          <CardDescription class="text-slate-300">{{ paletteTitle }}</CardDescription>
+        </CardHeader>
+
+        <CardContent class="space-y-6 px-4">
+          <div class="grid gap-2" :style="swatchGridStyle">
+            <HoverCard v-for="color in palette" :key="`primary-${color.hex}`">
+              <HoverCardTrigger>
+                <button type="button" class="group w-full" @click="() => { handleSelectColor(color.hex); handleCopy(color.hex) }">
+                  <div class="aspect-square w-full rounded-xl border border-white/25 transition duration-200 group-hover:scale-[1.02]" :style="{ background: color.hex }" />
+                  <p class="mt-1 truncate text-center font-mono text-[11px] text-slate-100">{{ color.hex }}</p>
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent class="w-[280px] border-white/20 bg-slate-950/95 text-slate-100">
+                <div class="space-y-1 text-xs font-mono">
+                  <button
+                    v-for="format in [
                       { label: 'HEX', value: color.hex },
                       { label: 'RGB', value: getColorConversions(color.hex).rgb },
                       { label: 'HSL', value: getColorConversions(color.hex).hsl },
                       { label: 'HWB', value: getColorConversions(color.hex).hwb },
                       { label: 'CMYK', value: getColorConversions(color.hex).cmyk },
-                      { label: 'LCH', value: getColorConversions(color.hex).lch }
-                    ]" :key="fmt.label"
-                      class="flex items-center justify-between px-2 py-2 rounded cursor-pointer transition-colors group hover:bg-gray-300/50"
-                      @click="handleCopy(fmt.value)">
-                      <span>
-                        <span class="font-bold">{{ fmt.label }}:</span>
-                        <span class="ml-2">{{ fmt.value }}</span>
-                      </span>
-                      <Copy class="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
+                      { label: 'LCH', value: getColorConversions(color.hex).lch },
+                    ]"
+                    :key="`${color.hex}-${format.label}`"
+                    type="button"
+                    class="flex w-full items-center justify-between rounded-md px-2 py-1.5 hover:bg-white/10"
+                    @click="handleCopy(format.value)"
+                  >
+                    <span>{{ format.label }}: {{ format.value }}</span>
+                    <Copy class="h-3.5 w-3.5 text-slate-300" />
+                  </button>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+
+          <div>
+            <div class="mb-3 flex items-center gap-2 text-base font-semibold text-white">
+              <Blend class="h-4 w-4 text-amber-200" />
+              Related Colors
             </div>
-            <div class="mt-6">
-              <CardTitle class="text-base mb-2">Related Colors:</CardTitle>
-              <div class="flex gap-2 flex-wrap">
-                <HoverCard v-for="color in secondaryPalette" :key="color.hex">
-                  <HoverCardTrigger>
-                    <div :style="{ background: color.hex, width: '73px', height: '75px' }"
-                      @click="() => { handleSelectColor(color.hex); handleCopy(color.hex); }" />
-                    <div class="w-full text-center text-xs font-mono mt-1" @click="handleCopy(color.hex)">{{ color.hex }}
-                    </div>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <div
-                      class="flex flex-col text-sm font-mono group-hover:bg-accent/10 rounded-md min-w-[350px] transition-colors">
-                      <div v-for="fmt in [
+
+            <div class="grid gap-2" :style="swatchGridStyle">
+              <HoverCard v-for="color in secondaryPalette" :key="`related-${color.hex}`">
+                <HoverCardTrigger>
+                  <button type="button" class="group w-full" @click="() => { handleSelectColor(color.hex); handleCopy(color.hex) }">
+                    <div class="aspect-square w-full rounded-xl border border-white/25 transition duration-200 group-hover:scale-[1.02]" :style="{ background: color.hex }" />
+                    <p class="mt-1 truncate text-center font-mono text-[11px] text-slate-100">{{ color.hex }}</p>
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent class="w-[280px] border-white/20 bg-slate-950/95 text-slate-100">
+                  <div class="space-y-1 text-xs font-mono">
+                    <button
+                      v-for="format in [
                         { label: 'HEX', value: color.hex },
                         { label: 'RGB', value: getColorConversions(color.hex).rgb },
                         { label: 'HSL', value: getColorConversions(color.hex).hsl },
                         { label: 'HWB', value: getColorConversions(color.hex).hwb },
                         { label: 'CMYK', value: getColorConversions(color.hex).cmyk },
-                        { label: 'LCH', value: getColorConversions(color.hex).lch }
-                      ]" :key="fmt.label"
-                        class="flex items-center justify-between px-2 py-2 rounded cursor-pointer transition-colors group hover:bg-gray-300/50"
-                        @click="handleCopy(fmt.value)">
-                        <span>
-                          <span class="font-bold">{{ fmt.label }}:</span>
-                          <span class="ml-2">{{ fmt.value }}</span>
-                        </span>
-                        <Copy class="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
+                        { label: 'LCH', value: getColorConversions(color.hex).lch },
+                      ]"
+                      :key="`${color.hex}-${format.label}`"
+                      type="button"
+                      class="flex w-full items-center justify-between rounded-md px-2 py-1.5 hover:bg-white/10"
+                      @click="handleCopy(format.value)"
+                    >
+                      <span>{{ format.label }}: {{ format.value }}</span>
+                      <Copy class="h-3.5 w-3.5 text-slate-300" />
+                    </button>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <section class="grid gap-4 md:grid-cols-2">
+        <Card class="border-white/15 bg-slate-900/55 py-5 backdrop-blur-xl dark:bg-slate-950/60">
+          <CardHeader class="px-4 pb-2">
+            <CardTitle class="text-xl text-white">Color Analysis</CardTitle>
+            <CardDescription class="text-slate-300">Quality checks for the active color token.</CardDescription>
+          </CardHeader>
+          <CardContent class="px-4">
+            <dl class="space-y-2 font-mono text-sm text-slate-100">
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Valid CSS</dt>
+                <dd :class="colorAnalysis.isValid ? 'text-emerald-300' : 'text-rose-300'">{{ colorAnalysis.isValid ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Format</dt>
+                <dd>{{ colorAnalysis.format }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Hue</dt>
+                <dd>{{ colorAnalysis.hue }}°</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Brightness</dt>
+                <dd>{{ colorAnalysis.brightness }}%</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Luminance</dt>
+                <dd>{{ colorAnalysis.luminance }}%</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-300">Contrast on white</dt>
+                <dd>{{ colorAnalysis.contrast.toFixed(2) }}:1</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+
+        <Card class="border-white/15 bg-slate-900/55 py-5 backdrop-blur-xl dark:bg-slate-950/60">
+          <CardHeader class="px-4 pb-2">
+            <CardTitle class="flex items-center gap-2 text-xl text-white">
+              <Ruler class="h-5 w-5 text-cyan-200" />
+              Conversions
+            </CardTitle>
+            <CardDescription class="text-slate-300">Output values across common color spaces.</CardDescription>
+          </CardHeader>
+          <CardContent class="px-4">
+            <ul class="space-y-2 font-mono text-sm text-slate-100">
+              <li v-for="row in conversionRows" :key="row.label" class="flex justify-between gap-3">
+                <span class="text-slate-300">{{ row.label }}</span>
+                <span class="text-right">{{ row.value }}</span>
+              </li>
+            </ul>
           </CardContent>
         </Card>
       </section>
 
-      <!-- Color Analysis & Conversions -->
-      <section class="w-full mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Color Analysis:</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul class="text-sm space-y-1 font-mono">
-              <li>Valid CSS Color: <span
-                  :class="{ 'text-green-600': colorAnalysis.isValid, 'text-red-600': !colorAnalysis.isValid }">{{
-                    colorAnalysis.isValid ? 'Yes' : 'No' }}</span></li>
-              <li>Format: {{ colorAnalysis.format }}</li>
-              <li>Hue: {{ colorAnalysis.hue }}°</li>
-              <li>Brightness: {{ colorAnalysis.brightness }}%</li>
-              <li>Luminance: {{ colorAnalysis.luminance }}%</li>
-              <li>Contrast on White: {{ colorAnalysis.contrast.toFixed(2) }}:1</li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Conversions:</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul class="text-sm space-y-1 font-mono">
-              <li>HEX: {{ colorConversions.hex }}</li>
-              <li>RGB: {{ colorConversions.rgb }}</li>
-              <li>HSL: {{ colorConversions.hsl }}</li>
-              <li>HWB: {{ colorConversions.hwb }}</li>
-              <li>CMYK: {{ colorConversions.cmyk }}</li>
-              <li>LCH: {{ colorConversions.lch }}</li>
-              <li>CSS Keyword: {{ colorConversions.keyword }}</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </section>
-
-      <!-- Footer -->
-      <footer class="mt-6 flex flex-col items-center gap-2 text-xs text-muted-foreground">
-        <div class="flex gap-4 mb-1">
-          <a href="https://instagram.com/krtclcdy" target="_blank" rel="noopener" aria-label="Instagram">
-            <Instagram class="w-5 h-5 hover:text-primary transition" />
+      <footer class="mt-2 flex flex-col items-center gap-2 pb-1 text-xs text-slate-300 md:pb-3">
+        <div class="flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-md">
+          <a href="https://instagram.com/krtclcdy" target="_blank" rel="noopener" aria-label="Instagram" class="text-slate-100 transition hover:text-cyan-200">
+            <Instagram class="h-4 w-4" />
           </a>
-          <a href="https://linkedin.com/in/kurtcalacday" target="_blank" rel="noopener" aria-label="LinkedIn">
-            <Linkedin class="w-5 h-5 hover:text-primary transition" />
+          <a href="https://linkedin.com/in/kurtcalacday" target="_blank" rel="noopener" aria-label="LinkedIn" class="text-slate-100 transition hover:text-cyan-200">
+            <Linkedin class="h-4 w-4" />
           </a>
-          <a href="https://github.com/KurutoDenzeru/Chromi" target="_blank" rel="noopener" aria-label="GitHub">
-            <Github class="w-5 h-5 hover:text-primary transition" />
+          <a href="https://github.com/KurutoDenzeru/Chromi" target="_blank" rel="noopener" aria-label="GitHub" class="text-slate-100 transition hover:text-cyan-200">
+            <Github class="h-4 w-4" />
           </a>
         </div>
-        <div class="text-center">
-          © {{ new Date().getFullYear() }} Chromi. KurutoDenzeru. All rights reserved.
-        </div>
+        <p class="text-center">© {{ new Date().getFullYear() }} Chromi. KurutoDenzeru. All rights reserved.</p>
       </footer>
 
       <Toaster position="bottom-right" />
