@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Shuffle } from 'lucide-vue-next'
 import Input from '@/components/ui/input/Input.vue'
 
 const props = defineProps<{
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   updateHueStart: [value: number]
   updateHueEnd: [value: number]
   updateSaturation: [value: number]
+  randomizeRequested: []
 }>()
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
@@ -62,14 +64,25 @@ const onHueEndInput = (value: string) => {
 <template>
   <aside class="border-b border-border/60 xl:border-b-0 xl:border-r">
     <div class="h-full p-4">
-      <div class="mb-5">
-        <h2 class="text-3xl font-semibold tracking-tight text-foreground">Generate Palettes</h2>
-        <p class="text-sm text-muted-foreground">Adding {{ safeVariations }} palettes</p>
+      <div class="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-semibold tracking-wide text-foreground">Generate Palettes</h2>
+          <p class="text-xs text-muted-foreground">Adding {{ safeVariations }} palettes</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="h-8 gap-1.5 border border-border/70 bg-background/65 px-2.5 text-xs text-foreground hover:bg-accent"
+          @click="emit('randomizeRequested')"
+        >
+          <Shuffle class="h-3.5 w-3.5" />
+          Randomize
+        </Button>
       </div>
 
       <div class="mb-5">
         <div class="mb-2 flex items-center justify-between text-foreground">
-          <span class="text-sm font-medium">Color Wheel</span>
+          <span class="text-sm font-semibold tracking-wide">Color Wheel</span>
           <span class="rounded-md border border-border/80 bg-muted/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">P{{ safeVariations }}</span>
         </div>
 
@@ -105,26 +118,26 @@ const onHueEndInput = (value: string) => {
       <div class="space-y-4">
         <div class="grid grid-cols-[1fr_auto_1fr_auto] items-end gap-2">
           <div>
-            <label class="mb-1 block text-sm font-medium text-foreground">Hue Start</label>
+            <label class="mb-1 block text-[13px] font-medium text-foreground">Hue Start</label>
             <Input :model-value="String(safeHueStart)" class="h-10 bg-background/70" @update:model-value="onHueStartInput" />
           </div>
           <Button variant="ghost" size="icon" class="h-10 w-10" @click="emit('updateHueStart', clamp(safeHueStart - 1, 0, 360))">−</Button>
 
           <div>
-            <label class="mb-1 block text-sm font-medium text-foreground">Hue End</label>
+            <label class="mb-1 block text-[13px] font-medium text-foreground">Hue End</label>
             <Input :model-value="String(safeHueEnd)" class="h-10 bg-background/70" @update:model-value="onHueEndInput" />
           </div>
           <Button variant="ghost" size="icon" class="h-10 w-10" @click="emit('updateHueEnd', clamp(safeHueEnd + 1, 0, 360))">+</Button>
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-foreground">Saturation ({{ safeSaturation }}%)</label>
+          <label class="mb-2 block text-[13px] font-medium text-foreground">Saturation ({{ safeSaturation }}%)</label>
           <Slider :model-value="[safeSaturation]" :min="0" :max="100" :step="1" class="w-full" @update:model-value="onSaturationChange" />
-          <p class="mt-2 text-sm text-muted-foreground">Adjust all chromas uniformly across palette columns.</p>
+          <p class="mt-2 text-xs text-muted-foreground">Adjust all chromas uniformly across palette columns.</p>
         </div>
 
         <div class="border-t border-border/60 pt-3">
-          <label class="mb-2 block text-sm font-medium text-foreground">Variations ({{ safeVariations }})</label>
+          <label class="mb-2 block text-[13px] font-medium text-foreground">Variations ({{ safeVariations }})</label>
           <Slider :model-value="[safeVariations]" :min="2" :max="12" :step="1" class="w-full" @update:model-value="onVariationsChange" />
         </div>
       </div>

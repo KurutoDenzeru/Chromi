@@ -111,6 +111,25 @@ const handleSwatchClick = (hex: string) => {
   handleCopy(hex)
 }
 
+const randomizePaletteSettings = () => {
+  const nextVariations = Math.floor(Math.random() * 7) + 4
+  const nextHueStart = Math.floor(Math.random() * 360)
+  const span = Math.floor(Math.random() * 170) + 90
+  const nextHueEnd = normalizeHue(nextHueStart + span)
+  const nextSaturation = Math.floor(Math.random() * 41) + 55
+
+  variations.value = clamp(nextVariations, 2, 12)
+  hueStart.value = clamp(nextHueStart, 0, 360)
+  hueEnd.value = clamp(nextHueEnd, 0, 360)
+  saturation.value = clamp(nextSaturation, 0, 100)
+
+  toast.success('Palette randomized', {
+    description: `Hues ${hueStart.value}° to ${hueEnd.value}° • Saturation ${saturation.value}%`,
+    duration: 1500,
+    position: 'bottom-right',
+  })
+}
+
 const updateVariations = (value: number) => {
   variations.value = clamp(value, 2, 12)
 }
@@ -142,6 +161,10 @@ const conversionRows = computed(() => [
   { label: 'LCH', value: colorConversions.value.lch },
   { label: 'Keyword', value: colorConversions.value.keyword || 'none' },
 ])
+
+const exportPalette = computed(() =>
+  paletteColumns.value.flatMap((column) => column.swatches.map((swatch) => ({ hex: swatch.hex }))),
+)
 </script>
 
 <template>
@@ -161,6 +184,7 @@ const conversionRows = computed(() => [
           :hue-start="normalizedHueStart"
           :hue-end="normalizedHueEnd"
           :saturation="normalizedSaturation"
+          @randomize-requested="randomizePaletteSettings"
           @update-variations="updateVariations"
           @update-hue-start="updateHueStart"
           @update-hue-end="updateHueEnd"
@@ -170,8 +194,8 @@ const conversionRows = computed(() => [
         <section class="min-w-0 border-b border-border/60 xl:border-b-0 xl:border-r">
           <div class="h-full p-3 sm:p-4">
             <div class="mb-3 flex items-baseline justify-between">
-              <h2 class="text-xl font-semibold tracking-tight text-foreground">Palette Grid</h2>
-              <p class="text-sm text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length }} tones</p>
+              <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
+              <p class="text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length }} tones</p>
             </div>
 
             <div class="overflow-auto rounded-xl border border-border/70 bg-card/60">
@@ -181,7 +205,7 @@ const conversionRows = computed(() => [
                   :key="`col-${column.hue}`"
                   class="border-r border-border/60 last:border-r-0"
                 >
-                  <div class="sticky top-0 z-10 border-b border-border/70 bg-background/90 px-3 py-3 text-sm font-semibold lowercase tracking-wide text-foreground backdrop-blur-md">
+                  <div class="sticky top-0 z-10 border-b border-border/70 bg-background/90 px-3 py-2.5 text-xs font-semibold lowercase tracking-wide text-foreground backdrop-blur-md">
                     {{ column.name }}
                   </div>
 
@@ -189,12 +213,12 @@ const conversionRows = computed(() => [
                     v-for="swatch in column.swatches"
                     :key="`swatch-${column.hue}-${swatch.step}`"
                     type="button"
-                    class="relative flex h-[108px] w-full flex-col justify-between border-b border-foreground/10 px-3 py-3 text-left transition hover:brightness-105"
+                    class="relative flex h-[98px] w-full flex-col justify-between border-b border-foreground/10 px-3 py-2.5 text-left transition hover:brightness-105"
                     :style="swatchStyle(swatch.hex)"
                     @click="handleSwatchClick(swatch.hex)"
                   >
-                    <span class="text-3xl font-semibold leading-none">{{ swatch.step }}</span>
-                    <span class="font-mono text-base tracking-tight">{{ swatch.hex }}</span>
+                    <span class="text-2xl font-semibold leading-none">{{ swatch.step }}</span>
+                    <span class="font-mono text-xs tracking-tight">{{ swatch.hex }}</span>
                     <span v-if="isSelected(swatch.hex)" class="absolute right-2 top-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground">Selected</span>
                   </button>
                 </div>
@@ -207,6 +231,7 @@ const conversionRows = computed(() => [
           :selected-color="selectedColor"
           :selected-swatch-style="selectedSwatchStyle"
           :key-metrics="keyMetrics"
+          :export-palette="exportPalette"
           :color-analysis="colorAnalysis"
           :conversion-rows="conversionRows"
         />

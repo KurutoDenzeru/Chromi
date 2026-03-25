@@ -7,6 +7,7 @@ defineProps<{
   selectedColor: string
   selectedSwatchStyle: { background: string }
   keyMetrics: { label: string; value: string }[]
+  exportPalette: { hex: string }[]
   colorAnalysis: {
     isValid: boolean
     format: string
@@ -26,6 +27,7 @@ defineProps<{
         :selected-color="selectedColor"
         :selected-swatch-style="selectedSwatchStyle"
         :key-metrics="keyMetrics"
+        :export-palette="exportPalette"
       />
 
       <PaletteColorAnalysisPanel :color-analysis="colorAnalysis" />
