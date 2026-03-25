@@ -21,9 +21,25 @@ const MODES = [
 ] as const
 
 type PaletteMode = typeof MODES[number]
+const MODE_LABELS: Record<PaletteMode, string> = {
+  analogous: 'Analogous',
+  monochrome: 'Monochromatic',
+  complementary: 'Complementary',
+  triadic: 'Triadic',
+  compound: 'Split-Complementary',
+  shades: 'Shades',
+  tetradic: 'Tetradic',
+  square: 'Square',
+}
+
+const props = withDefaults(defineProps<{
+  paletteMode?: PaletteMode
+}>(), {
+  paletteMode: 'shades',
+})
 
 const colorInput = ref('#dc143c')
-const paletteMode = ref<PaletteMode>('shades')
+const paletteMode = ref<PaletteMode>(props.paletteMode)
 const displayGridColumns = ref(12)
 
 const { width: windowWidth } = useWindowSize()
@@ -49,6 +65,7 @@ const emit = defineEmits<{
   colorInputChange: [value: string]
   paletteGenerated: [data: { palette: any[], secondaryPalette: any[] }]
   gridColumnsChange: [value: number]
+  paletteModeChange: [value: PaletteMode]
 }>()
 
 const isDesktop = ref(true)
@@ -67,6 +84,8 @@ const Modal = computed(() => ({
 
 const modalContentProps = computed(() => (isDesktop.value ? {} : { direction: 'bottom' as const }))
 let removeMediaListener: (() => void) | undefined
+let removeColorSchemeListener: (() => void) | undefined
+const resolvedTheme = ref<'light' | 'dark'>('light')
 
 const handleInputEnter = () => {
   generatePalette(gridSize.value)
@@ -102,35 +121,47 @@ onMounted(() => {
 
   updateDesktopState()
   mediaQuery.addEventListener('change', updateDesktopState)
+  const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const handleColorSchemeChange = () => {
+    if (themeMode.value === 'system') {
+      applyTheme('system')
+    }
+  }
+  colorSchemeQuery.addEventListener('change', handleColorSchemeChange)
   removeMediaListener = () => {
     mediaQuery.removeEventListener('change', updateDesktopState)
+  }
+  removeColorSchemeListener = () => {
+    colorSchemeQuery.removeEventListener('change', handleColorSchemeChange)
   }
 })
 
 onBeforeUnmount(() => {
   removeMediaListener?.()
+  removeColorSchemeListener?.()
 })
 
 function applyTheme(value: string) {
   if (typeof window === 'undefined') return
 
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const isDark = value === 'dark' || (value === 'system' && prefersDark)
+
   if (value === 'system') {
     document.documentElement.removeAttribute('data-theme')
-    document.documentElement.classList.remove('dark', 'light')
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark')
-    }
   } else {
     document.documentElement.setAttribute('data-theme', value)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(value)
   }
 
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.classList.toggle('light', !isDark)
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+  resolvedTheme.value = isDark ? 'dark' : 'light'
   themeMode.value = value as 'system' | 'light' | 'dark'
 }
 
 function toggleTheme() {
-  const next = themeMode.value === 'dark' ? 'light' : 'dark'
+  const next = resolvedTheme.value === 'dark' ? 'light' : 'dark'
   applyTheme(next)
 }
 
@@ -154,6 +185,16 @@ watch(colorInput, (newValue) => {
   emit('colorInputChange', newValue)
 })
 
+watch(() => props.paletteMode, (newMode) => {
+  if (newMode && newMode !== paletteMode.value) {
+    paletteMode.value = newMode
+  }
+}, { immediate: true })
+
+watch(paletteMode, (newMode) => {
+  emit('paletteModeChange', newMode)
+})
+
 watch(displayGridColumns, (newValue) => {
   emit('gridColumnsChange', newValue)
 }, { immediate: true })
@@ -166,32 +207,32 @@ if (!imagePalette.value.length) {
 <template>
   <component :is="Modal.Root" v-model:open="open">
     <TooltipProvider>
-      <div v-if="isDesktop" class="pointer-events-none fixed inset-y-0 left-4 z-50 hidden items-center md:flex">
-        <div class="pointer-events-auto flex w-[76px] flex-col items-center gap-3 rounded-3xl border border-white/25 bg-slate-900/35 px-3 py-4 backdrop-blur-xl shadow-md dark:border-white/10 dark:bg-slate-950/45">
-          <NuxtLink to="/" aria-label="Chromi Home" class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/20 backdrop-blur-md transition hover:bg-white/30 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20">
+      <div v-if="isDesktop" class="pointer-events-none fixed inset-x-0 top-5 z-50 hidden justify-center md:flex">
+        <div class="pointer-events-auto flex items-center gap-2 rounded-2xl border border-border/70 bg-background/70 px-3 py-2 text-foreground backdrop-blur-xl shadow-md dark:border-border/50 dark:bg-background/75">
+          <NuxtLink to="/" aria-label="Chromi Home" class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/55 backdrop-blur-md transition hover:bg-accent/80 dark:border-border/50 dark:bg-background/40 dark:hover:bg-accent/50">
             <NuxtImg src="/brand.webp" alt="Chromi" class="h-9 w-9" loading="lazy" />
           </NuxtLink>
 
-          <Separator class="my-1 bg-white/20 dark:bg-white/10" />
+          <Separator orientation="vertical" class="mx-1 h-8 bg-border/80 dark:bg-border/60" />
 
           <Tooltip>
             <TooltipTrigger as-child>
               <component :is="Modal.Trigger" as-child>
-                <Button variant="ghost" size="icon" aria-label="Open Palette Controls" class="h-10 w-10 rounded-2xl border border-transparent bg-white/10 text-white backdrop-blur-sm transition hover:border-white/20 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/15">
+                <Button variant="ghost" size="icon" aria-label="Open Palette Controls" class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60">
                   <Palette class="h-5 w-5" />
                 </Button>
               </component>
             </TooltipTrigger>
-            <TooltipContent side="right">Palette controls</TooltipContent>
+            <TooltipContent side="bottom">Palette controls</TooltipContent>
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button variant="ghost" size="icon" aria-label="Randomize Palette" class="h-10 w-10 rounded-2xl border border-transparent bg-white/10 text-white backdrop-blur-sm transition hover:border-white/20 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/15" @click="handleGenerateRandom">
+              <Button variant="ghost" size="icon" aria-label="Randomize Palette" class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60" @click="handleGenerateRandom">
                 <Shuffle class="h-5 w-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">Randomize</TooltipContent>
+            <TooltipContent side="bottom">Randomize</TooltipContent>
           </Tooltip>
 
           <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
@@ -199,37 +240,37 @@ if (!imagePalette.value.length) {
               <Tooltip>
                 <TooltipTrigger as-child>
                   <DialogTrigger as-child>
-                    <Button variant="ghost" size="icon" aria-label="Export Palette" class="h-10 w-10 rounded-2xl border border-transparent bg-white/10 text-white backdrop-blur-sm transition hover:border-white/20 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/15">
+                    <Button variant="ghost" size="icon" aria-label="Export Palette" class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60">
                       <Download class="h-5 w-5" />
                     </Button>
                   </DialogTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="right">Export palette</TooltipContent>
+                <TooltipContent side="bottom">Export palette</TooltipContent>
               </Tooltip>
             </template>
           </ExportPaletteDialog>
 
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button variant="ghost" size="icon" aria-label="Toggle theme" class="h-10 w-10 rounded-2xl border border-transparent bg-white/10 text-white backdrop-blur-sm transition hover:border-white/20 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/15" @click="toggleTheme">
-                <component :is="themeMode === 'dark' ? Moon : Sun" class="h-5 w-5" />
+              <Button variant="ghost" size="icon" aria-label="Toggle theme" class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60" @click="toggleTheme">
+                <component :is="resolvedTheme === 'dark' ? Moon : Sun" class="h-5 w-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">Toggle theme</TooltipContent>
+            <TooltipContent side="bottom">Toggle theme</TooltipContent>
           </Tooltip>
         </div>
       </div>
 
       <div v-else class="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">
-        <div class="pointer-events-auto flex w-full max-w-[360px] items-center justify-between rounded-3xl border border-white/20 bg-slate-900/45 px-3 py-2 backdrop-blur-xl shadow-md dark:border-white/10 dark:bg-slate-950/55">
-          <Button variant="ghost" size="icon" aria-label="Randomize Palette" class="h-11 w-11 rounded-2xl bg-white/10 text-white hover:bg-white/20" @click="handleGenerateRandom">
+        <div class="pointer-events-auto flex w-full max-w-[360px] items-center justify-between rounded-3xl border border-border/70 bg-background/75 px-3 py-2 text-foreground backdrop-blur-xl shadow-md dark:border-border/50 dark:bg-background/80">
+          <Button variant="ghost" size="icon" aria-label="Randomize Palette" class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60" @click="handleGenerateRandom">
             <Shuffle class="h-5 w-5" />
           </Button>
 
           <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
             <template #trigger>
               <DialogTrigger as-child>
-                <Button variant="ghost" size="icon" aria-label="Export Palette" class="h-11 w-11 rounded-2xl bg-white/10 text-white hover:bg-white/20">
+                <Button variant="ghost" size="icon" aria-label="Export Palette" class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60">
                   <Download class="h-5 w-5" />
                 </Button>
               </DialogTrigger>
@@ -237,16 +278,16 @@ if (!imagePalette.value.length) {
           </ExportPaletteDialog>
 
           <component :is="Modal.Trigger" as-child>
-            <Button variant="ghost" aria-label="Open Palette Controls" class="h-14 w-14 rounded-2xl border border-white/20 bg-white/20 text-white hover:bg-white/30">
+            <Button variant="ghost" aria-label="Open Palette Controls" class="h-14 w-14 rounded-2xl border border-border/70 bg-background/65 text-foreground hover:bg-accent/85 dark:border-border/50 dark:bg-background/45 dark:hover:bg-accent/65">
               <Palette class="h-6 w-6" />
             </Button>
           </component>
 
-          <Button variant="ghost" size="icon" aria-label="Toggle theme" class="h-11 w-11 rounded-2xl bg-white/10 text-white hover:bg-white/20" @click="toggleTheme">
-            <component :is="themeMode === 'dark' ? Moon : Sun" class="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Toggle theme" class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60" @click="toggleTheme">
+            <component :is="resolvedTheme === 'dark' ? Moon : Sun" class="h-5 w-5" />
           </Button>
 
-          <NuxtLink to="/" aria-label="Chromi Home" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20">
+          <NuxtLink to="/" aria-label="Chromi Home" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/55 hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60">
             <NuxtImg src="/brand.webp" alt="Chromi" class="h-7 w-7" loading="lazy" />
           </NuxtLink>
         </div>
@@ -256,12 +297,12 @@ if (!imagePalette.value.length) {
     <component
       :is="Modal.Content"
       v-bind="modalContentProps"
-      class="w-[96vw] max-w-xl border-white/20 bg-slate-950/92 text-slate-100 backdrop-blur-2xl dark:border-white/10"
+      class="w-[96vw] max-w-xl border-border/70 bg-background/95 text-foreground backdrop-blur-2xl dark:border-border/50 dark:bg-background/95"
     >
       <div class="space-y-5 px-4 py-3 sm:px-5 sm:py-4">
         <component :is="Modal.Header" class="text-left">
           <component :is="Modal.Title" class="font-semibold tracking-wide text-lg">Palette Lab</component>
-          <component :is="Modal.Description" class="text-slate-300">
+          <component :is="Modal.Description" class="text-muted-foreground">
             Tune base color, generation count, and display layout.
           </component>
         </component>
@@ -269,10 +310,10 @@ if (!imagePalette.value.length) {
         <div class="space-y-4">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-medium uppercase tracking-[0.16em] text-slate-300">Base color</label>
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Base color</label>
               <Tooltip>
                 <TooltipTrigger as-child>
-                  <button type="button" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200">
+                  <button type="button" class="inline-flex items-center gap-1 text-xs text-muted-foreground/90 hover:text-foreground">
                     <Info class="h-3.5 w-3.5" />
                     formats
                   </button>
@@ -285,23 +326,23 @@ if (!imagePalette.value.length) {
             <div class="flex items-center gap-2">
               <Input
                 v-model="colorInput"
-                class="h-11 border-white/15 bg-white/10 font-mono text-base text-white placeholder:text-slate-400"
+                class="h-11 border-border bg-background/70 font-mono text-base text-foreground placeholder:text-muted-foreground dark:bg-background/55"
                 placeholder="#dc143c"
                 @keyup.enter="handleInputEnter"
               />
-              <ColorPicker v-model="colorInput" class="rounded-xl border border-white/20 bg-white/10 p-1" />
+              <ColorPicker v-model="colorInput" class="rounded-xl border border-border bg-background/70 p-1 dark:bg-background/55" />
             </div>
           </div>
 
           <div class="space-y-2">
-            <label class="text-xs font-medium uppercase tracking-[0.16em] text-slate-300">Harmony</label>
+            <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Harmony</label>
             <Select v-model="paletteMode">
-              <SelectTrigger class="h-11 w-full border-white/15 bg-white/10 capitalize text-white">
-                {{ paletteMode }}
+              <SelectTrigger class="h-11 w-full border-border bg-background/70 capitalize text-foreground dark:bg-background/55">
+                {{ MODE_LABELS[paletteMode] }}
               </SelectTrigger>
-              <SelectContent class="border-white/20 bg-slate-950 text-slate-100">
+              <SelectContent class="border-border bg-popover text-popover-foreground">
                 <SelectItem v-for="mode in MODES" :key="mode" :value="mode" class="capitalize">
-                  {{ mode }}
+                  {{ MODE_LABELS[mode] }}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -309,8 +350,8 @@ if (!imagePalette.value.length) {
 
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-medium uppercase tracking-[0.16em] text-slate-300">Generated shades</label>
-              <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 font-mono text-sm text-slate-200">
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Generated shades</label>
+              <span class="rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-sm text-muted-foreground">
                 {{ gridSize }}
               </span>
             </div>
@@ -322,15 +363,15 @@ if (!imagePalette.value.length) {
               class="w-full"
               @update:model-value="(value) => { if (value && value[0]) gridSize = value[0] }"
             />
-            <div class="grid grid-cols-8 gap-1 text-center text-[11px] font-mono text-slate-400">
+            <div class="grid grid-cols-8 gap-1 text-center text-[11px] font-mono text-muted-foreground">
               <span v-for="n in [4, 8, 12, 16, 20, 24, 28, 32]" :key="n">{{ n }}</span>
             </div>
           </div>
 
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-medium uppercase tracking-[0.16em] text-slate-300">Display grid columns</label>
-              <span class="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 font-mono text-sm text-slate-200">
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Display grid columns</label>
+              <span class="rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-sm text-muted-foreground">
                 {{ displayGridColumns }}
               </span>
             </div>
@@ -342,7 +383,7 @@ if (!imagePalette.value.length) {
               class="w-full"
               @update:model-value="(value) => { if (value && value[0]) displayGridColumns = value[0] }"
             />
-            <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-mono text-slate-400">
+            <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-mono text-muted-foreground">
               <span v-for="n in [4, 6, 8, 10, 12, 14, 16]" :key="n">{{ n }}</span>
             </div>
           </div>
@@ -350,7 +391,7 @@ if (!imagePalette.value.length) {
           <div class="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
             <Button
               variant="ghost"
-              class="h-10 border border-white/20 bg-white/10 text-slate-100 hover:bg-white/20"
+              class="h-10 border border-border bg-background/70 text-foreground hover:bg-accent/80 dark:bg-background/55 dark:hover:bg-accent/60"
               :disabled="isLoading"
               @click="handleGenerateRandom"
             >
@@ -361,7 +402,7 @@ if (!imagePalette.value.length) {
             <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
               <template #trigger>
                 <DialogTrigger as-child>
-                  <Button variant="ghost" class="h-10 border border-white/20 bg-white/10 text-slate-100 hover:bg-white/20">
+                  <Button variant="ghost" class="h-10 border border-border bg-background/70 text-foreground hover:bg-accent/80 dark:bg-background/55 dark:hover:bg-accent/60">
                     <Download class="h-4 w-4" />
                     Export
                   </Button>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { TooltipProvider as TooltipProviderPrimitive, type TooltipProviderProps } from 'reka-ui'
+import type { TooltipProviderProps } from "reka-ui"
+import { TooltipProvider } from "reka-ui"
 
 const props = withDefaults(defineProps<TooltipProviderProps>(), {
   delayDuration: 0,
@@ -7,7 +8,7 @@ const props = withDefaults(defineProps<TooltipProviderProps>(), {
 </script>
 
 <template>
-  <TooltipProviderPrimitive v-bind="props">
+  <TooltipProvider v-bind="props">
     <slot />
-  </TooltipProviderPrimitive>
+  </TooltipProvider>
 </template>

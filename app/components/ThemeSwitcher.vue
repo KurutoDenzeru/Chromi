@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
 import { Sun, Moon, Monitor } from 'lucide-vue-next'
+import { useStorage } from '@vueuse/core'
 
 const modes = [
   { label: 'System', value: 'system', icon: Monitor },
@@ -8,27 +9,46 @@ const modes = [
   { label: 'Dark', value: 'dark', icon: Moon },
 ]
 
-const mode = ref('system')
-let isClient = false
+const mode = useStorage<'system' | 'light' | 'dark'>(
+  'palette-alchemy-theme',
+  'system',
+  typeof window !== 'undefined' ? window.localStorage : undefined,
+)
+let removeColorSchemeListener: (() => void) | undefined
 
 onMounted(() => {
-  isClient = true
   applyTheme(mode.value)
+
+  if (typeof window === 'undefined') return
+  const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const handleColorSchemeChange = () => {
+    if (mode.value === 'system') applyTheme('system')
+  }
+  colorSchemeQuery.addEventListener('change', handleColorSchemeChange)
+  removeColorSchemeListener = () => {
+    colorSchemeQuery.removeEventListener('change', handleColorSchemeChange)
+  }
+})
+
+onBeforeUnmount(() => {
+  removeColorSchemeListener?.()
 })
 
 function applyTheme(value: string) {
   if (typeof window === 'undefined') return
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const isDark = value === 'dark' || (value === 'system' && prefersDark)
+
   if (value === 'system') {
     document.documentElement.removeAttribute('data-theme')
-    document.documentElement.classList.remove('dark', 'light')
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark')
-    }
   } else {
     document.documentElement.setAttribute('data-theme', value)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(value)
   }
+
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.classList.toggle('light', !isDark)
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+  mode.value = value as 'system' | 'light' | 'dark'
 }
 
 function selectTheme(value: string) {
