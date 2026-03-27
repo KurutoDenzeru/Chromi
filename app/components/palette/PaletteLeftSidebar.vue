@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Shuffle } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, Shuffle } from 'lucide-vue-next'
 import Input from '@/components/ui/input/Input.vue'
+import { InputGroup } from '@/components/ui/input-group'
+import PaletteHueWheel from '@/components/palette/PaletteHueWheel.vue'
 
 const props = defineProps<{
   variations: number
   hueStart: number
   hueEnd: number
   saturation: number
+  pointSaturations: number[]
 }>()
 
 const emit = defineEmits<{
@@ -15,32 +18,16 @@ const emit = defineEmits<{
   updateHueStart: [value: number]
   updateHueEnd: [value: number]
   updateSaturation: [value: number]
+  updatePointSaturation: [payload: { index: number; value: number }]
   randomizeRequested: []
 }>()
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
-const normalizeHue = (value: number) => ((value % 360) + 360) % 360
-
+const roundToTenths = (value: number) => Math.round(value * 10) / 10
 const safeVariations = computed(() => clamp(Math.round(props.variations), 2, 12))
-const safeHueStart = computed(() => clamp(Math.round(props.hueStart), 0, 360))
-const safeHueEnd = computed(() => clamp(Math.round(props.hueEnd), 0, 360))
+const safeHueStart = computed(() => roundToTenths(clamp(props.hueStart, 0, 360)))
+const safeHueEnd = computed(() => roundToTenths(clamp(props.hueEnd, 0, 360)))
 const safeSaturation = computed(() => clamp(Math.round(props.saturation), 0, 100))
-
-const wheelNodes = computed(() => {
-  const count = safeVariations.value
-  const start = safeHueStart.value
-  const end = safeHueEnd.value
-
-  return Array.from({ length: count }, (_, index) => {
-    const ratio = count === 1 ? 0 : index / (count - 1)
-    const hue = normalizeHue(start + (end - start) * ratio)
-    const radians = ((hue - 90) * Math.PI) / 180
-    const radius = 44
-    const x = 50 + Math.cos(radians) * radius
-    const y = 50 + Math.sin(radians) * radius
-    return { hue, x, y }
-  })
-})
 
 const onVariationsChange = (value: number[]) => {
   if (value?.[0] !== undefined) emit('updateVariations', clamp(Math.round(value[0]), 2, 12))
@@ -51,19 +38,27 @@ const onSaturationChange = (value: number[]) => {
 }
 
 const onHueStartInput = (value: string) => {
-  const next = Number.parseInt(value, 10)
+  const next = Number.parseFloat(value)
   if (!Number.isNaN(next)) emit('updateHueStart', clamp(next, 0, 360))
 }
 
 const onHueEndInput = (value: string) => {
-  const next = Number.parseInt(value, 10)
+  const next = Number.parseFloat(value)
   if (!Number.isNaN(next)) emit('updateHueEnd', clamp(next, 0, 360))
+}
+
+const nudgeHueStart = (delta: number) => {
+  emit('updateHueStart', roundToTenths(clamp(safeHueStart.value + delta, 0, 360)))
+}
+
+const nudgeHueEnd = (delta: number) => {
+  emit('updateHueEnd', roundToTenths(clamp(safeHueEnd.value + delta, 0, 360)))
 }
 </script>
 
 <template>
   <aside class="border-b border-border/60 xl:border-b-0 xl:border-r">
-    <div class="h-full p-4">
+    <div class="h-full p-4 sm:p-5">
       <div class="mb-5 flex items-start justify-between gap-3">
         <div>
           <h2 class="text-sm font-semibold tracking-wide text-foreground">Generate Palettes</h2>
@@ -86,48 +81,52 @@ const onHueEndInput = (value: string) => {
           <span class="rounded-md border border-border/80 bg-muted/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">P{{ safeVariations }}</span>
         </div>
 
-        <div class="rounded-xl border border-border/70 bg-card/80 p-3">
-          <div class="relative mx-auto h-64 w-64">
-            <div class="absolute inset-0 rounded-[28%] bg-[conic-gradient(from_0deg,red,#ff8c00,#ffd700,#8cff00,#00d084,#00bfff,#3b82f6,#8b5cf6,#e11d48,red)]" />
-            <div class="absolute inset-[18px] rounded-[26%] border border-border/70 bg-background/85" />
-            <div class="absolute inset-[58px] rounded-full border border-dashed border-border/70 bg-background/60" />
-
-            <svg viewBox="0 0 100 100" class="absolute inset-[18px] h-[calc(100%-36px)] w-[calc(100%-36px)]">
-              <polyline
-                :points="wheelNodes.map((node) => `${node.x},${node.y}`).join(' ')"
-                fill="none"
-                class="stroke-foreground/80"
-                stroke-width="1.4"
-              />
-              <circle
-                v-for="node in wheelNodes"
-                :key="`node-${Math.round(node.hue)}-${node.x}`"
-                :cx="node.x"
-                :cy="node.y"
-                r="3.6"
-                class="stroke-background"
-                fill="hsl(var(--node-h), 85%, 55%)"
-                :style="{ '--node-h': `${node.hue}` }"
-                stroke-width="1.6"
-              />
-            </svg>
-          </div>
-        </div>
+        <PaletteHueWheel
+          :variations="safeVariations"
+          :hue-start="safeHueStart"
+          :hue-end="safeHueEnd"
+          :saturation="safeSaturation"
+          :point-saturations="props.pointSaturations"
+          @update-hue-start="emit('updateHueStart', $event)"
+          @update-hue-end="emit('updateHueEnd', $event)"
+          @update-point-saturation="emit('updatePointSaturation', $event)"
+        />
       </div>
 
       <div class="space-y-4">
-        <div class="grid grid-cols-[1fr_auto_1fr_auto] items-end gap-2">
+        <div class="grid gap-3 sm:grid-cols-2">
           <div>
             <label class="mb-1 block text-[13px] font-medium text-foreground">Hue Start</label>
-            <Input :model-value="String(safeHueStart)" class="h-10 bg-background/70" @update:model-value="onHueStartInput" />
+            <div class="grid grid-cols-[1fr_auto] gap-2">
+              <InputGroup class="h-11 rounded-xl bg-background/70">
+                <Input :model-value="safeHueStart.toFixed(1)" class="h-11 rounded-xl border-0 bg-transparent shadow-none focus-visible:ring-0" @update:model-value="onHueStartInput" />
+              </InputGroup>
+              <div class="grid h-11 w-11 overflow-hidden rounded-xl border border-border/70 bg-background/65">
+                <Button variant="ghost" size="icon" class="h-[21px] w-11 rounded-none border-b border-border/70" @click="nudgeHueStart(0.1)">
+                  <ChevronUp class="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" class="h-[21px] w-11 rounded-none" @click="nudgeHueStart(-0.1)">
+                  <ChevronDown class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button variant="ghost" size="icon" class="h-10 w-10" @click="emit('updateHueStart', clamp(safeHueStart - 1, 0, 360))">−</Button>
-
           <div>
             <label class="mb-1 block text-[13px] font-medium text-foreground">Hue End</label>
-            <Input :model-value="String(safeHueEnd)" class="h-10 bg-background/70" @update:model-value="onHueEndInput" />
+            <div class="grid grid-cols-[1fr_auto] gap-2">
+              <InputGroup class="h-11 rounded-xl bg-background/70">
+                <Input :model-value="safeHueEnd.toFixed(1)" class="h-11 rounded-xl border-0 bg-transparent shadow-none focus-visible:ring-0" @update:model-value="onHueEndInput" />
+              </InputGroup>
+              <div class="grid h-11 w-11 overflow-hidden rounded-xl border border-border/70 bg-background/65">
+                <Button variant="ghost" size="icon" class="h-[21px] w-11 rounded-none border-b border-border/70" @click="nudgeHueEnd(0.1)">
+                  <ChevronUp class="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" class="h-[21px] w-11 rounded-none" @click="nudgeHueEnd(-0.1)">
+                  <ChevronDown class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button variant="ghost" size="icon" class="h-10 w-10" @click="emit('updateHueEnd', clamp(safeHueEnd + 1, 0, 360))">+</Button>
         </div>
 
         <div>

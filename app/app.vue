@@ -69,6 +69,10 @@
       { rel: 'alternate', href: absoluteUrl('/'), hreflang: 'x-default' },
       { rel: 'icon', type: 'image/webp', href: '/brand.webp' },
       { rel: 'apple-touch-icon', href: '/brand.webp' },
+      {
+        rel: 'stylesheet',
+        href: 'https://api.fonts.coollabs.io/css2?family=Chakra+Petch:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+      },
     ],
     meta: [{ name: 'googlebot', content: 'index, follow, max-image-preview:large' }],
     script: [
