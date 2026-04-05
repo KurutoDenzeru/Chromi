@@ -1,317 +1,419 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
-import { usePalette } from '@/composables/palette/usePalette'
-import Input from '@/components/ui/input/Input.vue'
-import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
-import { toast } from 'vue-sonner'
-import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
-import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
-import { useWindowSize, useStorage } from '@vueuse/core'
-import { Dialog, DialogTrigger, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
+  import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
+  import { usePalette } from '@/composables/palette/usePalette'
+  import Input from '@/components/ui/input/Input.vue'
+  import { Palette, Shuffle, Info, Download, Sun, Moon } from 'lucide-vue-next'
+  import { toast } from 'vue-sonner'
+  import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
+  import { Drawer, DrawerTrigger, DrawerContent, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer'
+  import { useWindowSize, useStorage } from '@vueuse/core'
+  import { Dialog, DialogTrigger, DialogTrigger as DialogTriggerComp, DialogContent as DialogContentComp, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose as DialogCloseComp } from '@/components/ui/dialog'
 
-const MODES = [
-  'analogous',
-  'monochrome',
-  'complementary',
-  'triadic',
-  'compound',
-  'shades',
-  'tetradic',
-  'square',
-] as const
+  const MODES = [
+    'analogous',
+    'monochrome',
+    'complementary',
+    'triadic',
+    'compound',
+    'shades',
+    'tetradic',
+    'square',
+  ] as const
 
-type PaletteMode = typeof MODES[number]
+  type PaletteMode = typeof MODES[number]
+  const MODE_LABELS: Record<PaletteMode, string> = {
+    analogous: 'Analogous',
+    monochrome: 'Monochromatic',
+    complementary: 'Complementary',
+    triadic: 'Triadic',
+    compound: 'Split-Complementary',
+    shades: 'Shades',
+    tetradic: 'Tetradic',
+    square: 'Square',
+  }
 
-const colorInput = ref('#dc143c')
-const paletteMode = ref<PaletteMode>('shades')
-
-// Dynamic grid columns based on window size
-const { width: windowWidth } = useWindowSize()
-const defaultGridColumns = computed(() => {
-  if (!process.client) return 16
-  const availableWidth = Math.max(windowWidth.value - 60, 300)
-  const colCount = Math.max(4, Math.floor(availableWidth / 80))
-  return Math.min(colCount, 32)
-})
-
-// Slider binding (allows manual override)
-const gridSize = ref(14)
-const imagePalette = ref<string[]>([])
-
-const {
-  palette,
-  secondaryPalette,
-  isLoading,
-  generatePalette,
-  generateRandom,
-} = usePalette(colorInput, paletteMode)
-
-const emit = defineEmits<{
-  colorInputChange: [value: string]
-  paletteGenerated: [data: { palette: any[], secondaryPalette: any[] }]
-}>()
-
-// Responsive modal/drawer mapping: keep SSR + initial client render deterministic.
-const isDesktop = ref(true)
-const open = ref(false)
-const Modal = computed(() => ({
-  Root: isDesktop.value ? Dialog : Drawer,
-  Trigger: isDesktop.value ? DialogTriggerComp : DrawerTrigger,
-  Content: isDesktop.value ? DialogContentComp : DrawerContent,
-  Header: isDesktop.value ? DialogHeader : DrawerHeader,
-  Title: isDesktop.value ? DialogTitle : DrawerTitle,
-  Description: isDesktop.value ? DialogDescription : DrawerDescription,
-  Footer: isDesktop.value ? DialogFooter : DrawerFooter,
-  Close: isDesktop.value ? DialogCloseComp : DrawerClose,
-}))
-const modalContentProps = computed(() => (isDesktop.value ? {} : { direction: 'bottom' as const }))
-let removeMediaListener: (() => void) | undefined
-
-const handleInputEnter = () => {
-  generatePalette(gridSize.value)
-}
-
-
-const handleGenerateRandom = () => {
-  // Randomize the palette mode as well
-  const randomMode = MODES[Math.floor(Math.random() * MODES.length)] as PaletteMode
-  paletteMode.value = randomMode
-  generateRandom(gridSize.value)
-  
-  // Show toast notification with responsive position
-  toast.success('Palette randomized!', {
-    description: `Switched to ${randomMode} mode`,
-    duration: 2000,
-    class: 'dark:bg-slate-900 dark:border-slate-700 dark:text-white',
-    position: isDesktop.value ? 'bottom-right' : 'top-center',
+  const props = withDefaults(defineProps<{
+    paletteMode?: PaletteMode
+  }>(), {
+    paletteMode: 'shades',
   })
-}
 
-// Theme persistence with localStorage
-const themeMode = useStorage<'system'|'light'|'dark'>(
-  'palette-alchemy-theme',
-  'system',
-  typeof window !== 'undefined' ? window.localStorage : undefined
-)
+  const colorInput = ref('#dc143c')
+  const paletteMode = ref<PaletteMode>(props.paletteMode)
+  const displayGridColumns = ref(12)
 
-onMounted(() => {
-  if (typeof window === 'undefined') return
-  // Apply the persisted theme on mount
-  applyTheme(themeMode.value)
+  const { width: windowWidth } = useWindowSize()
+  const defaultGridColumns = computed(() => {
+    if (typeof window === 'undefined') return 16
+    const availableWidth = Math.max(windowWidth.value - 80, 300)
+    const colCount = Math.max(4, Math.floor(availableWidth / 78))
+    return Math.min(colCount, 28)
+  })
 
-  const mediaQuery = window.matchMedia('(min-width: 640px)')
-  const updateDesktopState = () => {
-    isDesktop.value = mediaQuery.matches
+  const gridSize = ref(14)
+  const imagePalette = ref<string[]>([])
+
+  const {
+    palette,
+    secondaryPalette,
+    isLoading,
+    generatePalette,
+    generateRandom,
+  } = usePalette(colorInput, paletteMode)
+
+  const emit = defineEmits<{
+    colorInputChange: [value: string]
+    paletteGenerated: [data: { palette: any[], secondaryPalette: any[] }]
+    gridColumnsChange: [value: number]
+    paletteModeChange: [value: PaletteMode]
+  }>()
+
+  const isDesktop = ref(true)
+  const open = ref(false)
+
+  const Modal = computed(() => ({
+    Root: isDesktop.value ? Dialog : Drawer,
+    Trigger: isDesktop.value ? DialogTriggerComp : DrawerTrigger,
+    Content: isDesktop.value ? DialogContentComp : DrawerContent,
+    Header: isDesktop.value ? DialogHeader : DrawerHeader,
+    Title: isDesktop.value ? DialogTitle : DrawerTitle,
+    Description: isDesktop.value ? DialogDescription : DrawerDescription,
+    Footer: isDesktop.value ? DialogFooter : DrawerFooter,
+    Close: isDesktop.value ? DialogCloseComp : DrawerClose,
+  }))
+
+  const modalContentProps = computed(() => (isDesktop.value ? {} : { direction: 'bottom' as const }))
+  let removeMediaListener: (() => void) | undefined
+  let removeColorSchemeListener: (() => void) | undefined
+  const resolvedTheme = ref<'light' | 'dark'>('light')
+
+  const handleInputEnter = () => {
+    generatePalette(gridSize.value)
   }
 
-  updateDesktopState()
-  mediaQuery.addEventListener('change', updateDesktopState)
-  removeMediaListener = () => {
-    mediaQuery.removeEventListener('change', updateDesktopState)
+  const handleGenerateRandom = () => {
+    const randomMode = MODES[Math.floor(Math.random() * MODES.length)] as PaletteMode
+    paletteMode.value = randomMode
+    generateRandom(gridSize.value)
+
+    toast.success('Palette randomized!', {
+      description: `Switched to ${randomMode} mode`,
+      duration: 1800,
+      position: isDesktop.value ? 'bottom-right' : 'top-center',
+    })
   }
-})
 
-onBeforeUnmount(() => {
-  removeMediaListener?.()
-})
+  const themeMode = useStorage<'system' | 'light' | 'dark'>(
+    'palette-alchemy-theme',
+    'system',
+    typeof window !== 'undefined' ? window.localStorage : undefined,
+  )
 
-function applyTheme(value: string) {
-  if (typeof window === 'undefined') return
-  if (value === 'system') {
-    document.documentElement.removeAttribute('data-theme')
-    document.documentElement.classList.remove('dark','light')
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark')
+  onMounted(() => {
+    if (typeof window === 'undefined') return
+
+    applyTheme(themeMode.value)
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const updateDesktopState = () => {
+      isDesktop.value = mediaQuery.matches
     }
-  } else {
-    document.documentElement.setAttribute('data-theme', value)
-    document.documentElement.classList.remove('dark','light')
-    document.documentElement.classList.add(value)
+
+    updateDesktopState()
+    mediaQuery.addEventListener('change', updateDesktopState)
+    const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleColorSchemeChange = () => {
+      if (themeMode.value === 'system') {
+        applyTheme('system')
+      }
+    }
+    colorSchemeQuery.addEventListener('change', handleColorSchemeChange)
+    removeMediaListener = () => {
+      mediaQuery.removeEventListener('change', updateDesktopState)
+    }
+    removeColorSchemeListener = () => {
+      colorSchemeQuery.removeEventListener('change', handleColorSchemeChange)
+    }
+  })
+
+  onBeforeUnmount(() => {
+    removeMediaListener?.()
+    removeColorSchemeListener?.()
+  })
+
+  function applyTheme(value: string) {
+    if (typeof window === 'undefined') return
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isDark = value === 'dark' || (value === 'system' && prefersDark)
+
+    if (value === 'system') {
+      document.documentElement.removeAttribute('data-theme')
+    } else {
+      document.documentElement.setAttribute('data-theme', value)
+    }
+
+    document.documentElement.classList.toggle('dark', isDark)
+    document.documentElement.classList.toggle('light', !isDark)
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+    resolvedTheme.value = isDark ? 'dark' : 'light'
+    themeMode.value = value as 'system' | 'light' | 'dark'
   }
-  themeMode.value = value as any
-}
 
-function toggleTheme() {
-  const next = themeMode.value === 'dark' ? 'light' : 'dark'
-  applyTheme(next)
-}
-
-// Auto-adjust gridSize when default changes (on resize)
-watch(defaultGridColumns, (newDefault) => {
-  if (gridSize.value > newDefault) {
-    gridSize.value = newDefault
+  function toggleTheme() {
+    const next = resolvedTheme.value === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
   }
-})
 
-// Regenerate palette when paletteMode or gridSize changes
-watch([paletteMode, gridSize], () => {
+  watch(defaultGridColumns, (newDefault) => {
+    if (gridSize.value > newDefault) {
+      gridSize.value = newDefault
+    }
+  })
+
+  watch([paletteMode, gridSize], () => {
+    if (!imagePalette.value.length) {
+      generatePalette(gridSize.value)
+    }
+  })
+
+  watch([palette, secondaryPalette], () => {
+    emit('paletteGenerated', { palette: palette.value, secondaryPalette: secondaryPalette.value })
+  })
+
+  watch(colorInput, (newValue) => {
+    emit('colorInputChange', newValue)
+  })
+
+  watch(() => props.paletteMode, (newMode) => {
+    if (newMode && newMode !== paletteMode.value) {
+      paletteMode.value = newMode
+    }
+  }, { immediate: true })
+
+  watch(paletteMode, (newMode) => {
+    emit('paletteModeChange', newMode)
+  })
+
+  watch(displayGridColumns, (newValue) => {
+    emit('gridColumnsChange', newValue)
+  }, { immediate: true })
+
   if (!imagePalette.value.length) {
     generatePalette(gridSize.value)
   }
-})
-
-// Emit changes to parent
-watch([palette, secondaryPalette], () => {
-  emit('paletteGenerated', { palette: palette.value, secondaryPalette: secondaryPalette.value })
-})
-
-watch(colorInput, (newValue) => {
-  emit('colorInputChange', newValue)
-})
-
-// On initial load, generate palette with correct count
-if (!imagePalette.value.length) {
-  generatePalette(gridSize.value)
-}
 </script>
 
 <template>
-  <!-- Floating Liquid Glass Dock (bottom-centered on larger screens, FAB on small screens) -->
   <component :is="Modal.Root" v-model:open="open">
     <TooltipProvider>
-      <!-- Dock trigger: top on desktop, bottom on mobile -->
-      <div :class="['fixed inset-x-0 flex justify-center pointer-events-none z-50', isDesktop ? 'top-6 md:top-8 items-start' : 'bottom-6 md:bottom-8 items-end']">
-        <div class="flex items-center gap-3 pointer-events-auto">
-          <div
-            class="flex items-center gap-2 bg-white/30 sm:bg-transparent dark:bg-slate-800/40 sm:dark:bg-transparent backdrop-blur-md border border-white/10 dark:border-slate-700/40 ring-1 ring-white/10 dark:ring-slate-800/30 rounded-xl px-2 py-1.5 shadow-xl">
-            <!-- Brand icon (link to home) -->
-            <NuxtLink to="/" class="flex items-center gap-2">
-              <div class="w-10 h-10 rounded-lg overflow-hidden transition hover:bg-white/10 dark:hover:bg-slate-800/40">
-                <NuxtImg src="/brand.webp" alt="Brand" class="w-10 h-10" loading="lazy" />
-              </div>
-              <span class="ml-0.5 font-bold hidden sm:inline">Chromi</span>
-            </NuxtLink>
+      <div v-if="isDesktop" class="pointer-events-none fixed inset-x-0 top-5 z-50 hidden justify-center md:flex">
+        <div
+          class="pointer-events-auto flex items-center gap-2 rounded-2xl border border-border/70 bg-background/70 px-3 py-2 text-foreground backdrop-blur-xl shadow-md dark:border-border/50 dark:bg-background/75">
+          <NuxtLink to="/" aria-label="Chromi Home"
+            class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/55 backdrop-blur-md transition hover:bg-accent/80 dark:border-border/50 dark:bg-background/40 dark:hover:bg-accent/50">
+            <NuxtImg src="/brand.webp" alt="Chromi" class="h-9 w-9" loading="lazy" />
+          </NuxtLink>
 
-            <div class="w-px h-6 bg-slate-300/50 dark:bg-slate-700/40 mx-1"></div>
+          <Separator orientation="vertical" class="mx-1 h-8 bg-border/80 dark:bg-border/60" />
 
-            <!-- Main trigger (palette) -->
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <component :is="Modal.Trigger" as-child>
-                  <button aria-label="Open Palette Controls" aria-controls="palette-controls-drawer"
-                    class="w-10 h-10 rounded-lg flex items-center justify-center hover:scale-105 hover:bg-white/20 transform transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                    <Palette class="w-6 h-6 text-foreground" />
-                  </button>
-                </component>
-              </TooltipTrigger>
-              <TooltipContent side="top">Palette Controls</TooltipContent>
-            </Tooltip>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <component :is="Modal.Trigger" as-child>
+                <Button variant="ghost" size="icon" aria-label="Open Palette Controls"
+                  class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60">
+                  <Palette class="h-5 w-5" />
+                </Button>
+              </component>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Palette controls</TooltipContent>
+          </Tooltip>
 
-            <!-- Randomize -->
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <button aria-label="Randomize Palette" @click="handleGenerateRandom"
-                  class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                  <Shuffle class="w-5 h-5 text-foreground" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Randomize Palette</TooltipContent>
-            </Tooltip>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button variant="ghost" size="icon" aria-label="Randomize Palette"
+                class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60"
+                @click="handleGenerateRandom">
+                <Shuffle class="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Randomize</TooltipContent>
+          </Tooltip>
 
-            <!-- Export -->
-            <ExportPaletteDialog :palette="palette" :isLoading="isLoading">
-              <template #trigger>
-                <Tooltip>
-                  <TooltipTrigger as-child>
-                    <DialogTrigger as-child>
-                      <button aria-label="Export Palette"
-                        class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                        <Download class="w-5 h-5 text-foreground" />
-                      </button>
-                    </DialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Export Palette</TooltipContent>
-                </Tooltip>
-              </template>
-            </ExportPaletteDialog>
+          <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
+            <template #trigger>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <DialogTrigger as-child>
+                    <Button variant="ghost" size="icon" aria-label="Export Palette"
+                      class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60">
+                      <Download class="h-5 w-5" />
+                    </Button>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Export palette</TooltipContent>
+              </Tooltip>
+            </template>
+          </ExportPaletteDialog>
 
-            <!-- separator before theme -->
-            <div class="w-px h-6 bg-slate-300/50 dark:bg-slate-700/40 mx-1"></div>
-
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <button aria-label="Toggle theme" @click="toggleTheme" class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/20 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50">
-                  <component :is="themeMode === 'dark' ? Moon : Sun" class="w-5 h-5 text-foreground" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Toggle Theme</TooltipContent>
-            </Tooltip>
-          </div>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button variant="ghost" size="icon" aria-label="Toggle theme"
+                class="h-10 w-10 rounded-2xl border border-transparent bg-background/50 text-foreground backdrop-blur-sm transition hover:border-border/70 hover:bg-accent/85 dark:bg-background/35 dark:hover:bg-accent/60"
+                @click="toggleTheme">
+                <component :is="resolvedTheme === 'dark' ? Moon : Sun" class="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Toggle theme</TooltipContent>
+          </Tooltip>
         </div>
-
-
       </div>
 
+      <div v-else class="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">
+        <div
+          class="pointer-events-auto flex w-full max-w-[360px] items-center justify-between rounded-3xl border border-border/70 bg-background/75 px-3 py-2 text-foreground backdrop-blur-xl shadow-md dark:border-border/50 dark:bg-background/80">
+          <Button variant="ghost" size="icon" aria-label="Randomize Palette"
+            class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60"
+            @click="handleGenerateRandom">
+            <Shuffle class="h-5 w-5" />
+          </Button>
+
+          <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
+            <template #trigger>
+              <DialogTrigger as-child>
+                <Button variant="ghost" size="icon" aria-label="Export Palette"
+                  class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60">
+                  <Download class="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+            </template>
+          </ExportPaletteDialog>
+
+          <component :is="Modal.Trigger" as-child>
+            <Button variant="ghost" aria-label="Open Palette Controls"
+              class="h-14 w-14 rounded-2xl border border-border/70 bg-background/65 text-foreground hover:bg-accent/85 dark:border-border/50 dark:bg-background/45 dark:hover:bg-accent/65">
+              <Palette class="h-6 w-6" />
+            </Button>
+          </component>
+
+          <Button variant="ghost" size="icon" aria-label="Toggle theme"
+            class="h-11 w-11 rounded-2xl bg-background/55 text-foreground hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60"
+            @click="toggleTheme">
+            <component :is="resolvedTheme === 'dark' ? Moon : Sun" class="h-5 w-5" />
+          </Button>
+
+          <NuxtLink to="/" aria-label="Chromi Home"
+            class="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/55 hover:bg-accent/80 dark:bg-background/40 dark:hover:bg-accent/60">
+            <NuxtImg src="/brand.webp" alt="Chromi" class="h-7 w-7" loading="lazy" />
+          </NuxtLink>
+        </div>
+      </div>
     </TooltipProvider>
 
-    <!-- Modal/Drawer content: Dialog on desktop, Drawer on mobile -->
-    <component :is="Modal.Content" v-bind="modalContentProps" class="max-w-3xl mx-auto">
-      <div class="px-4 py-2 md:py-4 lg:px-0 lg:py-4">
-        <component :is="Modal.Header" class="mb-4 text-left">
-          <component :is="Modal.Title">Palette Controls</component>
-          <component :is="Modal.Description">Pick a color, palette mode, and grid size. Generate or randomize your palette.</component>
+    <component :is="Modal.Content" v-bind="modalContentProps"
+      class="w-[96vw] max-w-xl border-border/70 bg-background/95 text-foreground backdrop-blur-2xl dark:border-border/50 dark:bg-background/95">
+      <div class="space-y-5 px-4 py-3 sm:px-5 sm:py-4">
+        <component :is="Modal.Header" class="text-left">
+          <component :is="Modal.Title" class="font-semibold tracking-wide text-lg">Palette Lab</component>
+          <component :is="Modal.Description" class="text-muted-foreground">
+            Tune base color, generation count, and display layout.
+          </component>
         </component>
 
-        <div class="flex flex-col gap-4">
-          <TooltipProvider>
-            <label class="text-sm font-medium">Base Color:</label>
-            <div class="flex items-center gap-2 w-full relative">
-              <div class="relative w-full">
-                <Input v-model="colorInput" class="w-full pr-10" placeholder="HEX, RGB, HSL, or CSS color name"
-                  @keyup.enter="handleInputEnter" />
-                <span class="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
-                  <Tooltip>
-                    <TooltipTrigger as-child>
-                      <Info class="w-4 h-4 text-muted-foreground hover:text-primary" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <span class="font-mono text-xs">Supported: HEX, RGB, HSL, CSS color names (e.g. crimson)</span>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-              </div>
-              <ColorPicker v-model="colorInput" />
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Base color</label>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <button type="button"
+                    class="inline-flex items-center gap-1 text-xs text-muted-foreground/90 hover:text-foreground">
+                    <Info class="h-3.5 w-3.5" />
+                    formats
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  HEX, RGB, HSL, and named colors are supported.
+                </TooltipContent>
+              </Tooltip>
             </div>
-          </TooltipProvider>
+            <div class="flex items-center gap-2">
+              <Input v-model="colorInput"
+                class="h-11 border-border bg-background/70 font-mono text-base text-foreground placeholder:text-muted-foreground dark:bg-background/55"
+                placeholder="#dc143c" @keyup.enter="handleInputEnter" />
+              <ColorPicker v-model="colorInput"
+                class="rounded-xl border border-border bg-background/70 p-1 dark:bg-background/55" />
+            </div>
+          </div>
 
-          <label class="text-sm font-medium">Color Harmony:</label>
-          <Select v-model="paletteMode">
-            <SelectTrigger class="w-full capitalize">{{ paletteMode }}</SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="mode in MODES" :key="mode" :value="mode" class="capitalize">
-                {{ mode }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div class="space-y-2">
+            <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Harmony</label>
+            <Select v-model="paletteMode">
+              <SelectTrigger
+                class="h-11 w-full border-border bg-background/70 capitalize text-foreground dark:bg-background/55">
+                {{ MODE_LABELS[paletteMode] }}
+              </SelectTrigger>
+              <SelectContent class="border-border bg-popover text-popover-foreground">
+                <SelectItem v-for="mode in MODES" :key="mode" :value="mode" class="capitalize">
+                  {{ MODE_LABELS[mode] }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div class="flex flex-col items-start w-full transition-all duration-300 ease-out">
-            <label class="text-sm font-medium mb-1">Grid Size: <span class="font-mono transition-all duration-300">{{ gridSize }}</span></label>
-            <Slider :model-value="[gridSize]" @update:model-value="(v) => { if (v && v[0]) gridSize = v[0] }" :min="4" :max="32" :step="4" class="w-full transition-all duration-300" />
-            <div class="flex justify-between w-full mt-1 text-sm text-muted-foreground font-mono select-none">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Generated
+                shades</label>
+              <span
+                class="rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-sm text-muted-foreground">
+                {{ gridSize }}
+              </span>
+            </div>
+            <Slider :model-value="[gridSize]" :min="4" :max="32" :step="2" class="w-full"
+              @update:model-value="(value) => { if (value && value[0]) gridSize = value[0] }" />
+            <div class="grid grid-cols-8 gap-1 text-center text-[11px] font-mono text-muted-foreground">
               <span v-for="n in [4, 8, 12, 16, 20, 24, 28, 32]" :key="n">{{ n }}</span>
             </div>
           </div>
 
-          <div class="flex gap-2 mt-2 flex-wrap items-center">
-            <Button @click="handleGenerateRandom" :disabled="isLoading" class="w-full md:w-auto">
-              <Shuffle class="w-5 h-5" />
-              <span class="ml-2">Generate Random</span>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Display grid
+                columns</label>
+              <span
+                class="rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-sm text-muted-foreground">
+                {{ displayGridColumns }}
+              </span>
+            </div>
+            <Slider :model-value="[displayGridColumns]" :min="4" :max="16" :step="1" class="w-full"
+              @update:model-value="(value) => { if (value && value[0]) displayGridColumns = value[0] }" />
+            <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-mono text-muted-foreground">
+              <span v-for="n in [4, 6, 8, 10, 12, 14, 16]" :key="n">{{ n }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+            <Button variant="ghost"
+              class="h-10 border border-border bg-background/70 text-foreground hover:bg-accent/80 dark:bg-background/55 dark:hover:bg-accent/60"
+              :disabled="isLoading" @click="handleGenerateRandom">
+              <Shuffle class="h-4 w-4" />
+              Randomize
             </Button>
 
-            <ExportPaletteDialog :palette="palette" :isLoading="isLoading">
+            <ExportPaletteDialog :palette="palette" :is-loading="isLoading">
               <template #trigger>
                 <DialogTrigger as-child>
-                  <Button variant="outline" class="w-full md:w-auto">
-                    <Download class="w-5 h-5" />
-                    <span class="ml-2">Export Palette</span>
+                  <Button variant="ghost"
+                    class="h-10 border border-border bg-background/70 text-foreground hover:bg-accent/80 dark:bg-background/55 dark:hover:bg-accent/60">
+                    <Download class="h-4 w-4" />
+                    Export
                   </Button>
                 </DialogTrigger>
               </template>
             </ExportPaletteDialog>
-          </div> 
+          </div>
         </div>
-
-
       </div>
     </component>
   </component>

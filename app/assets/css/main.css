@@ -118,6 +118,23 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Chakra Petch', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Chakra Petch', sans-serif;
+  }
+}
+
+@layer utilities {
+  .max-w-8xl {
+    max-width: 96rem;
+    /* 1536px */
   }
 }

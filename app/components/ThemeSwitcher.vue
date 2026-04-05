@@ -1,68 +1,84 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Sun, Moon, Monitor } from 'lucide-vue-next'
+  import { onBeforeUnmount, onMounted, watch } from 'vue'
+  import type { HTMLAttributes } from 'vue'
+  import { Monitor, Moon, Sun } from 'lucide-vue-next'
+  import { useStorage } from '@vueuse/core'
+  import { cn } from '@/lib/utils'
+  import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const modes = [
-  { label: 'System', value: 'system', icon: Monitor },
-  { label: 'Light', value: 'light', icon: Sun },
-  { label: 'Dark', value: 'dark', icon: Moon },
-]
+  type ThemeMode = 'system' | 'light' | 'dark'
 
-const mode = ref('system')
-let isClient = false
+  const props = defineProps<{
+    class?: HTMLAttributes['class']
+    iconOnly?: boolean
+  }>()
 
-onMounted(() => {
-  isClient = true
-  applyTheme(mode.value)
-})
+  const modes = [
+    { label: 'System', value: 'system', icon: Monitor },
+    { label: 'Light', value: 'light', icon: Sun },
+    { label: 'Dark', value: 'dark', icon: Moon },
+  ] as const
 
-function applyTheme(value: string) {
-  if (typeof window === 'undefined') return
-  if (value === 'system') {
-    document.documentElement.removeAttribute('data-theme')
-    document.documentElement.classList.remove('dark', 'light')
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark')
+  const mode = useStorage<ThemeMode>(
+    'palette-alchemy-theme',
+    'dark',
+    typeof window !== 'undefined' ? window.localStorage : undefined,
+  )
+  let removeColorSchemeListener: (() => void) | undefined
+
+  watch(mode, (value) => {
+    applyTheme(value)
+  }, { immediate: true })
+
+  onMounted(() => {
+    if (typeof window === 'undefined') return
+
+    const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleColorSchemeChange = () => {
+      if (mode.value === 'system') applyTheme('system')
     }
-  } else {
-    document.documentElement.setAttribute('data-theme', value)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(value)
+
+    colorSchemeQuery.addEventListener('change', handleColorSchemeChange)
+    removeColorSchemeListener = () => {
+      colorSchemeQuery.removeEventListener('change', handleColorSchemeChange)
+    }
+  })
+
+  onBeforeUnmount(() => {
+    removeColorSchemeListener?.()
+  })
+
+  function applyTheme(value: ThemeMode) {
+    if (typeof window === 'undefined') return
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isDark = value === 'dark' || (value === 'system' && prefersDark)
+
+    if (value === 'system') {
+      document.documentElement.removeAttribute('data-theme')
+    } else {
+      document.documentElement.setAttribute('data-theme', value)
+    }
+
+    document.documentElement.classList.toggle('dark', isDark)
+    document.documentElement.classList.toggle('light', !isDark)
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
   }
-}
-
-function selectTheme(value: string) {
-  mode.value = value
-  applyTheme(value)
-}
-
-const currentIcon = () => {
-  const found = modes.find(m => m.value === mode.value)
-  return found ? found.icon : Monitor
-}
 </script>
 
 <template>
-  <DropdownMenu>
-    <DropdownMenuTrigger as-child>
-      <Button
-        class="flex items-center gap-2 rounded-md border px-3 py-2 text-base bg-background text-foreground hover:bg-accent transition-colors focus:outline-none"
-        aria-label="Switch theme"
-        type="button"
-      >
-        <component :is="currentIcon()" class="w-5 h-5" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      <DropdownMenuItem
-        v-for="m in modes"
-        :key="m.value"
-        @click="selectTheme(m.value)"
-        :class="{'bg-accent text-accent-foreground': mode === m.value}"
-      >
-        <component :is="m.icon" class="w-4 h-4 mr-2" />
-        <span>{{ m.label }}</span>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
+  <Tabs v-model="mode" :class="cn('w-full', props.class)">
+    <TabsList :class="cn(
+      'grid h-11 w-full grid-cols-3 rounded-full border border-border/70 bg-background/60 p-1 shadow-sm backdrop-blur-xl',
+      iconOnly && 'h-9 w-[120px]'
+    )">
+      <TabsTrigger v-for="m in modes" :key="m.value" :value="m.value" :class="cn(
+        'rounded-full gap-1.5 px-3 text-[11px] uppercase tracking-[0.16em] sm:text-xs',
+        iconOnly && 'px-0'
+      )">
+        <component :is="m.icon" class="h-4 w-4" />
+        <span v-if="!iconOnly">{{ m.label }}</span>
+      </TabsTrigger>
+    </TabsList>
+  </Tabs>
 </template>
