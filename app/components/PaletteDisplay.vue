@@ -1,14 +1,17 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
   import chroma from 'chroma-js'
-  import { Instagram, Linkedin, Github } from 'lucide-vue-next'
   import { Toaster, toast } from 'vue-sonner'
   import { useColorConversions } from '@/composables/palette/useColorConversions'
   import { useColorAnalysis } from '@/composables/palette/useColorAnalysis'
+  import { LayoutGrid, Sparkles, ArrowDown } from 'lucide-vue-next'
   import PaletteLeftSidebar from '@/components/palette/PaletteLeftSidebar.vue'
   import PaletteRightSidebar from '@/components/palette/PaletteRightSidebar.vue'
-  import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
-  import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+  import AppNavbar from '@/components/AppNavbar.vue'
+  import AppHero from '@/components/AppHero.vue'
+  import AppFooter from '@/components/AppFooter.vue'
+
+  const copiedSwatchKey = ref<string | null>(null)
 
   const props = defineProps<{
     selectedColor: string
@@ -24,7 +27,7 @@
 
   const variations = ref(6)
   const hueStart = ref(140)
-  const hueEnd = ref(295)
+  const hueEnd = ref(126.7)
   const saturation = ref(80)
   const pointSaturations = ref<number[]>([])
 
@@ -50,7 +53,8 @@
   const normalizeHue = (value: number) => ((value % 360) + 360) % 360
   const roundToTenths = (value: number) => Math.round(value * 10) / 10
 
-  const normalizedVariations = computed(() => clamp(Math.round(variations.value), 2, 12))
+  const MAX_VARIATIONS = 25
+  const normalizedVariations = computed(() => clamp(Math.round(variations.value), 2, MAX_VARIATIONS))
   const normalizedSaturation = computed(() => clamp(Math.round(saturation.value), 0, 100))
   const normalizedHueStart = computed(() => roundToTenths(clamp(hueStart.value, 0, 360)))
   const normalizedHueEnd = computed(() => roundToTenths(clamp(hueEnd.value, 0, 360)))
@@ -66,10 +70,11 @@
     const count = normalizedVariations.value
     const start = normalizedHueStart.value
     const end = normalizedHueEnd.value
+    const span = normalizeHue(end - start)
 
     return Array.from({ length: count }, (_, index) => {
       const ratio = count === 1 ? 0 : index / (count - 1)
-      return normalizeHue(start + (end - start) * ratio)
+      return normalizeHue(start + span * ratio)
     })
   })
 
@@ -105,8 +110,13 @@
     color: textColorForHex(hex),
   })
 
-  const handleCopy = (hex: string) => {
+  const handleCopy = (hex: string, key: string) => {
     navigator.clipboard.writeText(hex)
+    copiedSwatchKey.value = key
+    setTimeout(() => {
+      copiedSwatchKey.value = null
+    }, 1200)
+
     toast.success(`Copied ${hex}`, {
       description: 'Color value copied to clipboard.',
       duration: 1400,
@@ -118,23 +128,23 @@
     emit('colorSelected', hex)
   }
 
-  const handleSwatchClick = (hex: string) => {
+  const handleSwatchClick = (hex: string, key: string) => {
     handleSelectColor(hex)
-    handleCopy(hex)
+    handleCopy(hex, key)
   }
 
   const randomizePaletteSettings = () => {
-    const nextVariations = Math.floor(Math.random() * 7) + 4
+    const nextVariations = Math.floor(Math.random() * 22) + 4
     const nextHueStart = Math.floor(Math.random() * 360)
     const span = Math.floor(Math.random() * 170) + 90
     const nextHueEnd = normalizeHue(nextHueStart + span)
     const nextSaturation = Math.floor(Math.random() * 41) + 55
 
-    variations.value = clamp(nextVariations, 2, 12)
+    variations.value = clamp(nextVariations, 2, MAX_VARIATIONS)
     hueStart.value = clamp(nextHueStart, 0, 360)
     hueEnd.value = clamp(nextHueEnd, 0, 360)
     saturation.value = clamp(nextSaturation, 0, 100)
-    pointSaturations.value = Array.from({ length: clamp(nextVariations, 2, 12) }, () => clamp(nextSaturation, 0, 100))
+    pointSaturations.value = Array.from({ length: clamp(nextVariations, 2, MAX_VARIATIONS) }, () => clamp(nextSaturation, 0, 100))
 
     toast.success('Palette randomized', {
       description: `Hues ${hueStart.value}° to ${hueEnd.value}° • Saturation ${saturation.value}%`,
@@ -144,7 +154,7 @@
   }
 
   const updateVariations = (value: number) => {
-    variations.value = clamp(value, 2, 12)
+    variations.value = clamp(value, 2, MAX_VARIATIONS)
   }
 
   const updateHueStart = (value: number) => {
@@ -165,6 +175,21 @@
     pointSaturations.value[payload.index] = clamp(Math.round(payload.value), 0, 100)
     const nextAverage = Math.round(pointSaturations.value.reduce((sum, current) => sum + current, 0) / pointSaturations.value.length)
     saturation.value = clamp(nextAverage, 0, 100)
+  }
+
+  const handleExportPalette = () => {
+    const colors = exportPalette.value.map((item) => item.hex)
+    const data = JSON.stringify(colors, null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chromi-palette.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success('Palette exported', { description: 'JSON file downloaded.', duration: 1400, position: 'bottom-right' })
   }
 
   const keyMetrics = computed(() => [
@@ -194,15 +219,17 @@
     <div
       class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(14,165,233,0.16),transparent_42%),radial-gradient(circle_at_82%_88%,rgba(59,130,246,0.15),transparent_35%)] dark:bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.2),transparent_40%),radial-gradient(circle_at_82%_88%,rgba(168,85,247,0.12),transparent_35%)]" />
     <div
-      class="pointer-events-none absolute inset-0 opacity-40 dark:opacity-35 [background-image:linear-gradient(to_right,rgba(14,165,233,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(14,165,233,0.07)_1px,transparent_1px)] dark:[background-image:linear-gradient(to_right,rgba(56,189,248,0.11)_1px,transparent_1px),linear-gradient(to_bottom,rgba(56,189,248,0.07)_1px,transparent_1px)] [background-size:56px_56px]" />
+      class="pointer-events-none absolute inset-0 opacity-30 dark:opacity-0 [background-image:linear-gradient(to_right,rgba(15,23,42,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.06)_1px,transparent_1px)] [background-size:48px_48px]" />
+    <div
+      class="pointer-events-none absolute inset-0 opacity-0 dark:opacity-35 dark:[background-image:linear-gradient(to_right,rgba(56,189,248,0.11)_1px,transparent_1px),linear-gradient(to_bottom,rgba(56,189,248,0.07)_1px,transparent_1px)] dark:[background-size:56px_56px]" />
 
-    <main class="relative mx-auto flex min-h-screen w-full max-w-[1820px] flex-col px-3 pb-24 pt-6 sm:px-4 md:px-6">
-      <div class="mb-4 flex justify-center">
-        <ThemeSwitcher />
-      </div>
+    <main class="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 pb-24 pt-6 sm:px-4 md:px-6">
+      <AppNavbar @randomize="randomizePaletteSettings" @exportPalette="handleExportPalette" />
+
+      <AppHero />
 
       <div
-        class="grid min-h-[calc(100vh-9rem)] overflow-hidden rounded-2xl border border-border/70 bg-background/75 backdrop-blur-xl dark:bg-background/70 xl:grid-cols-[430px_minmax(0,1fr)_300px]">
+        class="grid min-h-[840px] overflow-hidden rounded-xl border border-border/70 bg-card/90 shadow-xs xl:grid-cols-1 2xl:grid-cols-[18rem_minmax(0,1fr)_16rem] animate-in fade-in zoom-in-95 duration-1000 delay-300 ease-out fill-mode-both">
         <PaletteLeftSidebar :variations="normalizedVariations" :hue-start="normalizedHueStart"
           :hue-end="normalizedHueEnd" :saturation="normalizedSaturation" :point-saturations="normalizedPointSaturations"
           @randomize-requested="randomizePaletteSettings" @update-variations="updateVariations"
@@ -210,16 +237,21 @@
           @update-point-saturation="updatePointSaturation" />
 
         <section class="min-w-0 border-b border-border/60 xl:border-b-0 xl:border-r">
-          <div class="h-full p-3 sm:p-4">
-            <div class="mb-3 flex items-baseline justify-between">
-              <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
-              <p class="text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length }} tones
-              </p>
+          <div class="flex h-full flex-col">
+            <div class="shrink-0 px-4 py-4">
+              <div class="flex items-center gap-2.5">
+                <LayoutGrid class="h-4 w-4 text-cyan-500 dark:text-cyan-200" />
+                <div>
+                  <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
+                  <p class="mt-1 text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length
+                  }} tones</p>
+                </div>
+              </div>
             </div>
 
-            <ScrollArea class="h-[calc(100vh-13.5rem)] rounded-xl border border-border/70 bg-card/60">
+            <ScrollArea class="flex-1 border-t border-border/60 bg-card/40">
               <div class="grid min-w-max"
-                :style="{ gridTemplateColumns: `repeat(${paletteColumns.length}, minmax(180px, 1fr))` }">
+                :style="{ gridTemplateColumns: `repeat(${paletteColumns.length}, minmax(140px, 1fr))` }">
                 <div v-for="column in paletteColumns" :key="`col-${column.hue}`"
                   class="border-r border-border/60 last:border-r-0">
                   <div
@@ -228,12 +260,21 @@
                   </div>
 
                   <button v-for="swatch in column.swatches" :key="`swatch-${column.hue}-${swatch.step}`" type="button"
-                    class="relative flex h-[70px] w-full flex-col justify-between border-b border-foreground/10 px-3 py-2.5 text-left transition hover:brightness-105"
-                    :style="swatchStyle(swatch.hex)" @click="handleSwatchClick(swatch.hex)">
-                    <span class="text-xl font-semibold leading-none">{{ swatch.step }}</span>
-                    <span class="font-mono text-xs tracking-tight">{{ swatch.hex }}</span>
-                    <span v-if="isSelected(swatch.hex)"
-                      class="absolute right-2 top-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground">Selected</span>
+                    class="relative flex h-[66px] w-full flex-col justify-between border-b border-foreground/10 px-3 py-2.5 text-left overflow-hidden group"
+                    :style="swatchStyle(swatch.hex)"
+                    @click="handleSwatchClick(swatch.hex, `${column.hue}-${swatch.step}`)">
+
+                    <Transition name="swatch-copy">
+                      <div v-if="copiedSwatchKey === `${column.hue}-${swatch.step}`"
+                        class="absolute inset-0 z-20 flex items-center justify-center bg-inherit">
+                        <span class="text-sm font-bold uppercase tracking-widest opacity-90">Copied!</span>
+                      </div>
+                    </Transition>
+
+                    <span
+                      class="text-xl font-extrabold leading-none transition-transform duration-300 group-hover:scale-105 group-hover:origin-left">{{
+                        swatch.step }}</span>
+                    <span class="font-mono text-sm tracking-tight opacity-95">{{ swatch.hex }}</span>
                   </button>
                 </div>
               </div>
@@ -247,26 +288,26 @@
           :conversion-rows="conversionRows" />
       </div>
 
-      <footer class="mt-3 flex flex-col items-center gap-2 text-xs text-muted-foreground">
-        <div
-          class="flex items-center gap-3 rounded-full border border-border/70 bg-background/70 px-4 py-2 backdrop-blur-md dark:bg-background/55">
-          <a href="https://instagram.com/krtclcdy" target="_blank" rel="noopener" aria-label="Instagram"
-            class="text-foreground transition hover:text-cyan-600 dark:hover:text-cyan-200">
-            <Instagram class="h-4 w-4" />
-          </a>
-          <a href="https://linkedin.com/in/kurtcalacday" target="_blank" rel="noopener" aria-label="LinkedIn"
-            class="text-foreground transition hover:text-cyan-600 dark:hover:text-cyan-200">
-            <Linkedin class="h-4 w-4" />
-          </a>
-          <a href="https://github.com/KurutoDenzeru/Chromi" target="_blank" rel="noopener" aria-label="GitHub"
-            class="text-foreground transition hover:text-cyan-600 dark:hover:text-cyan-200">
-            <Github class="h-4 w-4" />
-          </a>
-        </div>
-        <p class="text-center">© {{ new Date().getFullYear() }} Chromi. KurutoDenzeru. All rights reserved.</p>
-      </footer>
+      <AppFooter />
 
       <Toaster position="bottom-right" />
     </main>
   </div>
 </template>
+
+<style scoped>
+
+  .swatch-copy-enter-active,
+  .swatch-copy-leave-active {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .swatch-copy-enter-from {
+    transform: translateY(-100%);
+  }
+
+  .swatch-copy-leave-to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+</style>

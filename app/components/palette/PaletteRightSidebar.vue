@@ -2,6 +2,7 @@
 import PaletteSelectionPanel from '@/components/palette/PaletteSelectionPanel.vue'
 import PaletteColorAnalysisPanel from '@/components/palette/PaletteColorAnalysisPanel.vue'
 import PaletteColorConversionsPanel from '@/components/palette/PaletteColorConversionsPanel.vue'
+import ExportPaletteDialog from '@/components/ExportPaletteDialog.vue'
 
 defineProps<{
   selectedColor: string
@@ -21,8 +22,8 @@ defineProps<{
 </script>
 
 <template>
-  <aside>
-    <div class="h-full p-3 sm:p-4">
+  <aside class="flex h-full flex-col">
+    <div class="flex-1 overflow-y-auto p-3 sm:p-4">
       <PaletteSelectionPanel
         :selected-color="selectedColor"
         :selected-swatch-style="selectedSwatchStyle"
@@ -33,6 +34,10 @@ defineProps<{
       <PaletteColorAnalysisPanel :color-analysis="colorAnalysis" />
 
       <PaletteColorConversionsPanel :conversion-rows="conversionRows" />
+    </div>
+
+    <div class="shrink-0 border-t border-border/60 p-4">
+      <ExportPaletteDialog :palette="exportPalette" :is-loading="false" />
     </div>
   </aside>
 </template>

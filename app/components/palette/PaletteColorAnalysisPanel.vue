@@ -15,11 +15,14 @@ defineProps<{
 
 <template>
   <section class="border-b border-border/60 py-3">
-    <div class="mb-2 flex items-center gap-2 text-foreground">
+    <div class="mb-2 flex items-center gap-2.5 text-foreground">
       <Activity class="h-4 w-4 text-cyan-500 dark:text-cyan-200" />
-      <span class="text-sm font-semibold tracking-wide">Color Analysis</span>
+      <div>
+        <h2 class="text-sm font-semibold tracking-wide">Color Analysis</h2>
+        <p class="mt-1 text-[10px] sm:text-xs text-muted-foreground">Visual metrics & stats</p>
+      </div>
     </div>
-    <dl class="space-y-1.5 font-mono text-sm text-foreground">
+    <dl class="space-y-1.5 font-mono text-xs text-foreground">
       <div class="flex justify-between gap-3">
         <dt class="text-muted-foreground">Valid CSS</dt>
         <dd :class="colorAnalysis.isValid ? 'text-emerald-500 dark:text-emerald-300' : 'text-rose-500 dark:text-rose-300'">
