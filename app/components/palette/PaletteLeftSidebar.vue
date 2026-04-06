@@ -68,7 +68,7 @@
         <p class="mt-1 text-xs text-muted-foreground">Adding {{ safeVariations }} palettes</p>
       </div>
 
-      <div class="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
+      <div class="flex-1 space-y-4 overflow-y-auto border-t border-border/60 px-4 pb-4 pt-4">
         <div class="space-y-2">
           <div class="flex h-5 items-center justify-between gap-2 text-foreground">
             <span class="text-sm font-medium leading-none">Color Wheel</span>
@@ -100,7 +100,8 @@
                     @click="nudgeHueStart(0.1)">
                     <ChevronUp class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group" @click="nudgeHueStart(-0.1)">
+                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group"
+                    @click="nudgeHueStart(-0.1)">
                     <ChevronDown class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
                 </div>
@@ -119,7 +120,8 @@
                     @click="nudgeHueEnd(0.1)">
                     <ChevronUp class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group" @click="nudgeHueEnd(-0.1)">
+                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group"
+                    @click="nudgeHueEnd(-0.1)">
                     <ChevronDown class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
                 </div>
@@ -131,7 +133,8 @@
             <label class="mb-2 block text-xs font-medium text-foreground">Saturation ({{ safeSaturation }}%)</label>
             <Slider :model-value="[safeSaturation]" :min="0" :max="100" :step="1" class="w-full"
               @update:model-value="onSaturationChange" />
-            <p class="mt-2 text-[10px] text-muted-foreground leading-tight">Adjust all chromas uniformly across columns.</p>
+            <p class="mt-2 text-[10px] text-muted-foreground leading-tight">Adjust all chromas uniformly across columns.
+            </p>
           </div>
 
           <div class="border-t border-border/60 pt-3">
@@ -143,7 +146,8 @@
       </div>
 
       <div class="shrink-0 border-t border-border/60 p-4">
-        <Button variant="outline" class="w-full gap-2 bg-background/50 hover:bg-accent hover:shadow-sm transition-all" @click="emit('randomizeRequested')">
+        <Button variant="outline" class="w-full gap-2 bg-background/50 hover:bg-accent hover:shadow-sm transition-all"
+          @click="emit('randomizeRequested')">
           <Shuffle class="h-4 w-4" />
           Randomize Palette
         </Button>

@@ -25,9 +25,9 @@
   const colorConversions = useColorConversions(selectedColorRef)
   const colorAnalysis = useColorAnalysis(selectedColorRef)
 
-  const variations = ref(6)
-  const hueStart = ref(140)
-  const hueEnd = ref(126.7)
+  const variations = ref(12)
+  const hueStart = ref(167)
+  const hueEnd = ref(13)
   const saturation = ref(80)
   const pointSaturations = ref<number[]>([])
 
@@ -239,14 +239,12 @@
         <section class="min-w-0 border-b border-border/60 xl:border-b-0 xl:border-r">
           <div class="flex h-full flex-col">
             <div class="shrink-0 px-4 py-4">
-              <div class="flex items-center gap-2.5">
+              <div class="flex items-center gap-2">
                 <LayoutGrid class="h-4 w-4 text-cyan-500 dark:text-cyan-200" />
-                <div>
-                  <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
-                  <p class="mt-1 text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length
-                  }} tones</p>
-                </div>
+                <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
               </div>
+              <p class="mt-1 text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length
+                }} tones</p>
             </div>
 
             <ScrollArea class="flex-1 border-t border-border/60 bg-card/40">
