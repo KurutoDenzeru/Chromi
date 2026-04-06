@@ -75,7 +75,7 @@
       <TabsTrigger v-for="m in modes" :key="m.value" :value="m.value" :class="cn(
         'rounded-full gap-1.5 px-3 text-[11px] uppercase tracking-[0.16em] sm:text-xs',
         iconOnly && 'px-0'
-      )">
+      )" :aria-label="m.label">
         <component :is="m.icon" class="h-4 w-4" />
         <span v-if="!iconOnly">{{ m.label }}</span>
       </TabsTrigger>

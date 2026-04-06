@@ -13,7 +13,7 @@
 <template>
   <footer class="mt-4 flex justify-center">
     <div
-      class="w-full max-w-7xl rounded-xl border border-border/70 bg-card/80 px-4 py-4 shadow-xs backdrop-blur-xl sm:px-5">
+      class="w-full max-w-7xl rounded-xl border border-border/50 bg-background/60 px-4 py-4 shadow-xs backdrop-blur-md sm:px-5">
       <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
         <p class="text-sm text-muted-foreground order-2 sm:order-1">
           © {{ new Date().getFullYear() }} Chromi. KurutoDenzeru. All rights reserved.

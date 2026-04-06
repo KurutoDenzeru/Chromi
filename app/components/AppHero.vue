@@ -26,9 +26,9 @@
     <h1
       class="relative z-10 text-5xl font-extrabold uppercase leading-[0.9] tracking-tighter text-foreground animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150 ease-out fill-mode-both sm:text-7xl md:text-8xl">
       <slot name="title">
-        Color <br class="sm:hidden" /> System <br />
+        Color <br class="sm:hidden" /> Palette <br />
         <span
-          class="bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 bg-clip-text text-transparent dark:from-cyan-400 dark:via-blue-400 dark:to-indigo-400">
+          class="animate-rainbow-shimmer bg-linear-to-r from-[#ff184a] via-[#ffb800] via-[#a2ff00] via-[#09d7ff] via-[#3272ff] via-[#ea1cff] to-[#ff184a] bg-[length:200%_auto] bg-clip-text text-transparent">
           Generator
         </span>
       </slot>

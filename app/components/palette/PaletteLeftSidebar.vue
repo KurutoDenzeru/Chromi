@@ -88,40 +88,42 @@
         <div class="space-y-4">
           <div class="grid gap-3 sm:grid-cols-2">
             <div>
-              <label class="mb-1 block text-xs font-medium text-foreground">Hue Start</label>
+              <label for="palette-hue-start" class="mb-1 block text-xs font-medium text-foreground">Hue Start</label>
               <div class="grid grid-cols-[1fr_auto] gap-2">
-                <InputGroup class="h-9 rounded-lg bg-background/70 shadow-sm transition-shadow hover:shadow-md">
-                  <Input :model-value="safeHueStart.toFixed(1)"
-                    class="h-9 rounded-lg border-0 bg-transparent px-2.5 text-sm shadow-none focus-visible:ring-0"
+                <InputGroup class="h-11 rounded-lg bg-background/70 shadow-sm transition-shadow hover:shadow-md">
+                  <Input id="palette-hue-start" :model-value="safeHueStart.toFixed(1)"
+                    class="h-11 rounded-lg border-0 bg-transparent px-2.5 text-sm shadow-none focus-visible:ring-0"
                     @update:model-value="onHueStartInput" />
                 </InputGroup>
-                <div class="grid h-9 w-9 overflow-hidden rounded-lg border border-border/70 bg-background/65 shadow-sm">
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none border-b border-border/70 group"
-                    @click="nudgeHueStart(0.1)">
+                <div
+                  class="grid h-11 w-11 overflow-hidden rounded-lg border border-border/70 bg-background/65 shadow-sm">
+                  <Button variant="ghost" size="icon" aria-label="Increase Hue Start"
+                    class="h-[22px] w-11 rounded-none border-b border-border/70 group" @click="nudgeHueStart(0.1)">
                     <ChevronUp class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group"
-                    @click="nudgeHueStart(-0.1)">
+                  <Button variant="ghost" size="icon" aria-label="Decrease Hue Start"
+                    class="h-[21px] w-11 rounded-none group" @click="nudgeHueStart(-0.1)">
                     <ChevronDown class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
                 </div>
               </div>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-medium text-foreground">Hue End</label>
+              <label for="palette-hue-end" class="mb-1 block text-xs font-medium text-foreground">Hue End</label>
               <div class="grid grid-cols-[1fr_auto] gap-2">
-                <InputGroup class="h-9 rounded-lg bg-background/70 shadow-sm transition-shadow hover:shadow-md">
-                  <Input :model-value="safeHueEnd.toFixed(1)"
-                    class="h-9 rounded-lg border-0 bg-transparent px-2.5 text-sm shadow-none focus-visible:ring-0"
+                <InputGroup class="h-11 rounded-lg bg-background/70 shadow-sm transition-shadow hover:shadow-md">
+                  <Input id="palette-hue-end" :model-value="safeHueEnd.toFixed(1)"
+                    class="h-11 rounded-lg border-0 bg-transparent px-2.5 text-sm shadow-none focus-visible:ring-0"
                     @update:model-value="onHueEndInput" />
                 </InputGroup>
-                <div class="grid h-9 w-9 overflow-hidden rounded-lg border border-border/70 bg-background/65 shadow-sm">
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none border-b border-border/70 group"
-                    @click="nudgeHueEnd(0.1)">
+                <div
+                  class="grid h-11 w-11 overflow-hidden rounded-lg border border-border/70 bg-background/65 shadow-sm">
+                  <Button variant="ghost" size="icon" aria-label="Increase Hue End"
+                    class="h-[22px] w-11 rounded-none border-b border-border/70 group" @click="nudgeHueEnd(0.1)">
                     <ChevronUp class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
-                  <Button variant="ghost" size="icon" class="h-[17px] w-9 rounded-none group"
-                    @click="nudgeHueEnd(-0.1)">
+                  <Button variant="ghost" size="icon" aria-label="Decrease Hue End"
+                    class="h-[21px] w-11 rounded-none group" @click="nudgeHueEnd(-0.1)">
                     <ChevronDown class="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
                 </div>
@@ -130,17 +132,19 @@
           </div>
 
           <div>
-            <label class="mb-2 block text-xs font-medium text-foreground">Saturation ({{ safeSaturation }}%)</label>
-            <Slider :model-value="[safeSaturation]" :min="0" :max="100" :step="1" class="w-full"
-              @update:model-value="onSaturationChange" />
+            <label id="palette-saturation-label" class="mb-2 block text-xs font-medium text-foreground">Saturation ({{
+              safeSaturation }}%)</label>
+            <Slider aria-labelledby="palette-saturation-label" :model-value="[safeSaturation]" :min="0" :max="100"
+              :step="1" class="w-full" @update:model-value="onSaturationChange" />
             <p class="mt-2 text-[10px] text-muted-foreground leading-tight">Adjust all chromas uniformly across columns.
             </p>
           </div>
 
           <div class="border-t border-border/60 pt-3">
-            <label class="mb-2 block text-xs font-medium text-foreground">Variations ({{ safeVariations }})</label>
-            <Slider :model-value="[safeVariations]" :min="2" :max="MAX_VARIATIONS" :step="1" class="w-full"
-              @update:model-value="onVariationsChange" />
+            <label id="palette-variations-label" class="mb-2 block text-xs font-medium text-foreground">Variations ({{
+              safeVariations }})</label>
+            <Slider aria-labelledby="palette-variations-label" :model-value="[safeVariations]" :min="2"
+              :max="MAX_VARIATIONS" :step="1" class="w-full" @update:model-value="onVariationsChange" />
           </div>
         </div>
       </div>

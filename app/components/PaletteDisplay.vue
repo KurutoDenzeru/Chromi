@@ -214,7 +214,7 @@
 </script>
 
 <template>
-  <div class="relative min-h-screen w-full overflow-hidden">
+  <div class="relative min-h-screen w-full overflow-x-clip">
     <div class="pointer-events-none absolute inset-0 bg-background" />
     <div
       class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(14,165,233,0.16),transparent_42%),radial-gradient(circle_at_82%_88%,rgba(59,130,246,0.15),transparent_35%)] dark:bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.2),transparent_40%),radial-gradient(circle_at_82%_88%,rgba(168,85,247,0.12),transparent_35%)]" />
@@ -229,7 +229,7 @@
       <AppHero />
 
       <div
-        class="grid min-h-[840px] overflow-hidden rounded-xl border border-border/70 bg-card/90 shadow-xs xl:grid-cols-1 2xl:grid-cols-[18rem_minmax(0,1fr)_16rem] animate-in fade-in zoom-in-95 duration-1000 delay-300 ease-out fill-mode-both">
+        class="grid min-h-[840px] overflow-hidden rounded-xl border border-border/50 bg-background/60 shadow-lg backdrop-blur-md xl:grid-cols-1 2xl:grid-cols-[18rem_minmax(0,1fr)_16rem] animate-in fade-in zoom-in-95 duration-1000 delay-300 ease-out fill-mode-both">
         <PaletteLeftSidebar :variations="normalizedVariations" :hue-start="normalizedHueStart"
           :hue-end="normalizedHueEnd" :saturation="normalizedSaturation" :point-saturations="normalizedPointSaturations"
           @randomize-requested="randomizePaletteSettings" @update-variations="updateVariations"
@@ -244,7 +244,7 @@
                 <h2 class="text-sm font-semibold tracking-wide text-foreground">Palette Grid</h2>
               </div>
               <p class="mt-1 text-xs text-muted-foreground">{{ normalizedVariations }} palettes · {{ rowScale.length
-                }} tones</p>
+              }} tones</p>
             </div>
 
             <ScrollArea class="flex-1 border-t border-border/60 bg-card/40">
@@ -253,7 +253,7 @@
                 <div v-for="column in paletteColumns" :key="`col-${column.hue}`"
                   class="border-r border-border/60 last:border-r-0">
                   <div
-                    class="sticky top-0 z-10 border-b border-border/70 bg-background/90 px-3 py-2.5 text-xs font-semibold lowercase tracking-wide text-foreground backdrop-blur-md">
+                    class="sticky top-0 z-10 border-b border-border/50 bg-background/70 px-3 py-2.5 text-xs font-semibold lowercase tracking-wide text-foreground backdrop-blur-md">
                     {{ column.name }}
                   </div>
 
