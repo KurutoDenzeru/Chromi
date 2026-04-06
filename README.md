@@ -54,32 +54,32 @@ The app is componentized under `app/components`, with UI primitives and palette 
 ```text
 app/
   components/
-    AppNavbar.vue              # top navigation bar component
-    AppHero.vue                # landing section and hero content
-    AppFooter.vue              # site footer with links and attribution
-    ColorPicker.vue            # color input and selection UI
-    PaletteDisplay.vue         # palette grid and swatch rendering
-    PaletteControls.vue        # palette generation and customization controls
-    ExportPaletteDialog.vue    # export dialog for saving palette assets
-    ThemeSwitcher.vue          # light/dark theme toggle
+    AppNavbar.vue                       # top navigation bar component
+    AppHero.vue                         # landing section and hero content
+    AppFooter.vue                       # site footer with links and attribution
+    ColorPicker.vue                     # color input and selection UI
+    PaletteDisplay.vue                  # palette grid and swatch rendering
+    PaletteControls.vue                 # palette generation and customization controls
+    ExportPaletteDialog.vue             # export dialog for saving palette assets
+    ThemeSwitcher.vue                   # light/dark theme toggle
     palette/
-      PaletteColorAnalysisPanel.vue   # color property analysis display
-      PaletteColorConversionsPanel.vue# format conversion display panel
-      PaletteHueWheel.vue             # interactive hue wheel component
-      PaletteLeftSidebar.vue          # left sidebar with controls
-      PaletteRightSidebar.vue         # right sidebar with palette details
-      PaletteSelectionPanel.vue       # palette selection and preview
-    ui/                           # shadcn/ui design primitives and component wrappers
+      PaletteColorAnalysisPanel.vue     # color property analysis display
+      PaletteColorConversionsPanel.vue  # format conversion display panel
+      PaletteHueWheel.vue               # interactive hue wheel component
+      PaletteLeftSidebar.vue            # left sidebar with controls
+      PaletteRightSidebar.vue           # right sidebar with palette details
+      PaletteSelectionPanel.vue         # palette selection and preview
+    ui/                                 # shadcn/ui design primitives and component wrappers
   composables/
     palette/
-      usePalette.ts              # palette generation logic
-      usePaletteStore.ts         # Pinia store for palette state
-      useColorAnalysis.ts        # color analysis helpers
-      useColorConversions.ts     # color format conversion helpers
+      usePalette.ts                     # palette generation logic
+      usePaletteStore.ts                # Pinia store for palette state
+      useColorAnalysis.ts               # color analysis helpers
+      useColorConversions.ts            # color format conversion helpers
   pages/
-    index.vue                   # home page route
+    index.vue                           # home page route
   types/
-    palette.ts                  # palette-related TypeScript types
+    palette.ts                          # palette-related TypeScript types
 ```
 
 ## 🤝🏻 Contributing
